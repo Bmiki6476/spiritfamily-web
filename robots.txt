@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://spiritfamily.sk/sitemap.xml

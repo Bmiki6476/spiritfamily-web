@@ -1,0 +1,54 @@
+{
+  "ok": true,
+  "poznamka": "Ukážkové dáta pre režim bez Google tabuľky. Po napojení API sa tento súbor nepoužíva.",
+  "akcie": [
+    {
+      "id": "2026-09-04-rumova-degustacia",
+      "datum": "2026-09-04",
+      "cas": "19:30",
+      "nazov": "Rumová degustácia",
+      "podnadpis": "Sedem pohárov · tri školy · jeden Karibik",
+      "popis": "Sedem vzoriek rumu naprieč tromi tradíciami Karibiku – španielskou, anglickou aj francúzskou. K degustácii patrí občerstvenie.\nKapacita je obmedzená, miesto si rezervujte vopred.",
+      "cena": "29 €",
+      "typ": "rum",
+      "kapacita": 20,
+      "volne": 0
+    },
+    {
+      "id": "2026-09-11-johnnie-walker",
+      "datum": "2026-09-11",
+      "cas": "19:30",
+      "nazov": "Johnnie Walker",
+      "podnadpis": "Príbeh kráčajúceho muža v siedmich pohároch",
+      "popis": "Degustácia whisky Johnnie Walker – sedem pohárov a príbeh jednej z najznámejších značiek škótskej whisky, od obchodu s potravinami v Kilmarnocku až po dnešok.\nKapacita je obmedzená, miesto si rezervujte vopred.",
+      "cena": "35 €",
+      "typ": "whisky",
+      "kapacita": 20,
+      "volne": 2
+    },
+    {
+      "id": "2026-09-18-latino-dance-night",
+      "datum": "2026-09-18",
+      "cas": "19:30",
+      "nazov": "Latino Dance Night",
+      "podnadpis": "Salsa · Bachata · Kizomba",
+      "popis": "Latino večer s MS Dance Studio. Najprv lekcia, potom párty.\nPríďte sami, v páre alebo s partiou.",
+      "cena": "",
+      "typ": "tanec",
+      "kapacita": 40,
+      "volne": 27
+    },
+    {
+      "id": "2026-09-25-tequila",
+      "datum": "2026-09-25",
+      "cas": "19:30",
+      "nazov": "Tequila",
+      "podnadpis": "Zabudnite na soľ a citrón",
+      "popis": "Prvá tequilová degustácia v Spirit Family. Ukážeme, že tequila je oveľa viac než panák so soľou a citrónom. Občerstvenie je v cene.\nKapacita je obmedzená, miesto si rezervujte vopred.",
+      "cena": "25 €",
+      "typ": "tequila",
+      "kapacita": 20,
+      "volne": 4
+    }
+  ]
+}
