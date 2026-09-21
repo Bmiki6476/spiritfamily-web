@@ -2,21 +2,110 @@
   "ok": true,
   "poznamka": "Ukážkové dáta (stav YouTube kanála k 13. 9. 2026). Po napojení API sa videá načítavajú automaticky.",
   "novinky": [
-    { "typ": "video", "video_id": "0RXVVDLmQnI", "titulok": "Černota!!!", "datum": "2026-09-13T08:00:00+00:00" },
-    { "typ": "video", "video_id": "oRicwfP0pwA", "titulok": "Kúpil som pivo z Lidla za pár centov. Zničilo 167-ročný pivovar", "datum": "2026-09-12T08:00:00+00:00" },
-    { "typ": "video", "video_id": "ojI6wLdazJw", "titulok": "História Johnnie Walker - príbeh ktorý upúta.", "datum": "2026-09-11T08:00:00+00:00" },
-    { "typ": "video", "video_id": "0u1ceMItjIo", "titulok": "Pivo, ktoré prežilo cára, vojny aj rozpad impéria (Fascinujúci príbeh Lvivske)", "datum": "2026-09-08T08:00:00+00:00" },
-    { "typ": "video", "video_id": "JUZ9gFh-9hM", "titulok": "Sú poľské remeselné pivá lepšie ako naše? (Veľký test)", "datum": "2026-09-05T08:00:00+00:00" },
-    { "typ": "video", "video_id": "8TC4kOC5Ws8", "titulok": "Zničili české pivá nemeckú konkurenciu? (Budvar, Radegast vs. Beck's)", "datum": "2026-09-02T08:00:00+00:00" },
-    { "typ": "oznam", "titulok": "Program na september je vonku", "text": "Rum, Johnnie Walker, Latino Dance Night a prvá tequilová degustácia. Štyri piatky, ktoré stoja za to prísť.", "odkaz": "akcie.html", "obrazok": "img/akcie/program-september-2026.webp", "datum": "2026-08-30T12:00:00" },
-    { "typ": "video", "video_id": "seUf416hPU0", "titulok": "Prečo sa kvôli pivu v Čechách skoro strieľalo? (+ Test bezlepkových pív)", "datum": "2026-08-28T08:00:00+00:00" },
-    { "typ": "video", "video_id": "-beL5U8QlH4", "titulok": "Exkluzívna degustácia Johnnie Walker", "datum": "2026-08-23T08:00:00+00:00" },
-    { "typ": "video", "video_id": "jC-0WnG4i7g", "titulok": "Tento český pivovar ma dostal! (Až na jedno pivo...) | Bohemia Regent", "datum": "2026-08-18T08:00:00+00:00" },
-    { "typ": "video", "video_id": "RBRB2wX8fTA", "titulok": "TOTO PIVO SA NEDALO VYPIŤ! 🤢 Šok v Mystery Boxe", "datum": "2026-08-13T08:00:00+00:00" },
-    { "typ": "video", "video_id": "adphGR2cbxI", "titulok": "V obyčajnej 11-tke som našiel VIŠNE?! 🍒 Z tohto piva som odpadol!", "datum": "2026-08-06T08:00:00+00:00" },
-    { "typ": "video", "video_id": "eOiwuFwv4sA", "titulok": "Ukazujem, čo skrývam za chrbtom: Fľaše, ktoré by ste bežne neotvorili", "datum": "2026-07-31T08:00:00+00:00" },
-    { "typ": "video", "video_id": "8v7tgwCPBrc", "titulok": "Odpadávam! Rohozec ma ŠOKOVAL a toto som naozaj nečakal... 😱 (Mystery Box)", "datum": "2026-07-28T08:00:00+00:00" },
-    { "typ": "video", "video_id": "S7uIYWlTMMI", "titulok": "Kamera zlyhala, ale TOTO pivo som musel natočiť znova! (80 bodov)", "datum": "2026-07-24T08:00:00+00:00" },
-    { "typ": "video", "video_id": "ca8Y4rWa6Cg", "titulok": "Degustácia na živo!", "datum": "2026-07-22T08:00:00+00:00" }
+    {
+      "typ": "oznam",
+      "titulok": "Degustácie po novom aj online",
+      "text": "Každý mesiac jedna rumová a jedna whisková degustácia. Nemôžete prísť? Objednajte si vzorky domov a degustujte s nami cez prenos alebo zo záznamu.",
+      "odkaz": "akcie.html",
+      "datum": "2026-09-21T12:00:00"
+    },
+    {
+      "typ": "video",
+      "video_id": "0RXVVDLmQnI",
+      "titulok": "Černota!!!",
+      "datum": "2026-09-13T08:00:00+00:00"
+    },
+    {
+      "typ": "video",
+      "video_id": "oRicwfP0pwA",
+      "titulok": "Kúpil som pivo z Lidla za pár centov. Zničilo 167-ročný pivovar",
+      "datum": "2026-09-12T08:00:00+00:00"
+    },
+    {
+      "typ": "video",
+      "video_id": "ojI6wLdazJw",
+      "titulok": "História Johnnie Walker - príbeh ktorý upúta.",
+      "datum": "2026-09-11T08:00:00+00:00"
+    },
+    {
+      "typ": "video",
+      "video_id": "0u1ceMItjIo",
+      "titulok": "Pivo, ktoré prežilo cára, vojny aj rozpad impéria (Fascinujúci príbeh Lvivske)",
+      "datum": "2026-09-08T08:00:00+00:00"
+    },
+    {
+      "typ": "video",
+      "video_id": "JUZ9gFh-9hM",
+      "titulok": "Sú poľské remeselné pivá lepšie ako naše? (Veľký test)",
+      "datum": "2026-09-05T08:00:00+00:00"
+    },
+    {
+      "typ": "video",
+      "video_id": "8TC4kOC5Ws8",
+      "titulok": "Zničili české pivá nemeckú konkurenciu? (Budvar, Radegast vs. Beck's)",
+      "datum": "2026-09-02T08:00:00+00:00"
+    },
+    {
+      "typ": "oznam",
+      "titulok": "Program na september je vonku",
+      "text": "Rum, Johnnie Walker, Latino Dance Night a prvá tequilová degustácia. Štyri piatky, ktoré stoja za to prísť.",
+      "odkaz": "akcie.html",
+      "obrazok": "img/akcie/program-september-2026.webp",
+      "datum": "2026-08-30T12:00:00"
+    },
+    {
+      "typ": "video",
+      "video_id": "seUf416hPU0",
+      "titulok": "Prečo sa kvôli pivu v Čechách skoro strieľalo? (+ Test bezlepkových pív)",
+      "datum": "2026-08-28T08:00:00+00:00"
+    },
+    {
+      "typ": "video",
+      "video_id": "-beL5U8QlH4",
+      "titulok": "Exkluzívna degustácia Johnnie Walker",
+      "datum": "2026-08-23T08:00:00+00:00"
+    },
+    {
+      "typ": "video",
+      "video_id": "jC-0WnG4i7g",
+      "titulok": "Tento český pivovar ma dostal! (Až na jedno pivo...) | Bohemia Regent",
+      "datum": "2026-08-18T08:00:00+00:00"
+    },
+    {
+      "typ": "video",
+      "video_id": "RBRB2wX8fTA",
+      "titulok": "TOTO PIVO SA NEDALO VYPIŤ! 🤢 Šok v Mystery Boxe",
+      "datum": "2026-08-13T08:00:00+00:00"
+    },
+    {
+      "typ": "video",
+      "video_id": "adphGR2cbxI",
+      "titulok": "V obyčajnej 11-tke som našiel VIŠNE?! 🍒 Z tohto piva som odpadol!",
+      "datum": "2026-08-06T08:00:00+00:00"
+    },
+    {
+      "typ": "video",
+      "video_id": "eOiwuFwv4sA",
+      "titulok": "Ukazujem, čo skrývam za chrbtom: Fľaše, ktoré by ste bežne neotvorili",
+      "datum": "2026-07-31T08:00:00+00:00"
+    },
+    {
+      "typ": "video",
+      "video_id": "8v7tgwCPBrc",
+      "titulok": "Odpadávam! Rohozec ma ŠOKOVAL a toto som naozaj nečakal... 😱 (Mystery Box)",
+      "datum": "2026-07-28T08:00:00+00:00"
+    },
+    {
+      "typ": "video",
+      "video_id": "S7uIYWlTMMI",
+      "titulok": "Kamera zlyhala, ale TOTO pivo som musel natočiť znova! (80 bodov)",
+      "datum": "2026-07-24T08:00:00+00:00"
+    },
+    {
+      "typ": "video",
+      "video_id": "ca8Y4rWa6Cg",
+      "titulok": "Degustácia na živo!",
+      "datum": "2026-07-22T08:00:00+00:00"
+    }
   ]
 }

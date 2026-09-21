@@ -49,6 +49,32 @@
       "typ": "tequila",
       "kapacita": 20,
       "volne": 4
+    },
+    {
+      "id": "2026-10-16-rumova-degustacia",
+      "datum": "2026-10-16",
+      "cas": "19:30",
+      "nazov": "Rumová degustácia",
+      "podnadpis": "Večer s rumom – vzorky a príbehy značiek",
+      "popis": "Mesačná rumová degustácia v bare: sedem až osem vzoriek a rozprávanie o značkách, ktoré za nimi stoja.\nNemôžete prísť do Trenčína? Objednajte si vzorky domov a degustujte s nami online – naživo alebo neskôr zo záznamu. Vzorky objednajte aspoň 5 dní vopred.",
+      "cena": "",
+      "typ": "rum",
+      "kapacita": 20,
+      "volne": 20,
+      "online": true
+    },
+    {
+      "id": "2026-10-30-whiskova-degustacia",
+      "datum": "2026-10-30",
+      "cas": "19:30",
+      "nazov": "Whisková degustácia",
+      "podnadpis": "Večer s whisky – vzorky a príbehy značiek",
+      "popis": "Mesačná whisková degustácia v bare: sedem až osem vzoriek a rozprávanie o značkách, ktoré za nimi stoja.\nNemôžete prísť do Trenčína? Objednajte si vzorky domov a degustujte s nami online – naživo alebo neskôr zo záznamu. Vzorky objednajte aspoň 5 dní vopred.",
+      "cena": "",
+      "typ": "whisky",
+      "kapacita": 20,
+      "volne": 20,
+      "online": true
     }
   ]
 }

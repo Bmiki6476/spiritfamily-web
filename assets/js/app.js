@@ -5,6 +5,8 @@
   const CFG = window.SF_CONFIG || {};
   const API = String(CFG.API_URL || '').trim();
   const DEMO = !API;
+  // Kým nie je pripojená Google tabuľka, rezervácia sa odošle e-mailom na adresu baru.
+  const MAILOM = DEMO && CFG.REZERVACIA_MAILOM !== false;
   const MAX_OSOB = CFG.MAX_OSOB || 6;
   const TEL = CFG.TELEFON || '';
   const TEL_HREF = 'tel:+421' + TEL.replace(/\D/g, '').replace(/^0/, '');
@@ -16,6 +18,7 @@
   const DNI = ['nedeľa', 'pondelok', 'utorok', 'streda', 'štvrtok', 'piatok', 'sobota'];
   const DNI_KR = ['Po', 'Ut', 'St', 'Št', 'Pi', 'So', 'Ne'];
   const ALKO = ['rum', 'whisky', 'tequila', 'gin', 'pivo', 'degustacia'];
+  const ONLINE_DNI = CFG.ONLINE_UZAVIERKA_DNI || 5; // online vzorky treba objednať aspoň toľko dní vopred
 
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
@@ -72,7 +75,9 @@
     const start = new Date(y, m - 1, d, hh, mm);
     const kapacita = Number(a.kapacita) || 0;
     const volne = kapacita ? Math.max(0, Number(a.volne ?? kapacita)) : 0;
-    return { ...a, typ: String(a.typ || 'ine'), cas: bezCasu ? '' : a.cas, start, kapacita, volne, minula: start < new Date() };
+    const online = a.online === true || /^(true|áno|ano|1)$/i.test(String(a.online || ''));
+    const onlineOtvorene = online && start - new Date() >= ONLINE_DNI * 864e5;
+    return { ...a, typ: String(a.typ || 'ine'), cas: bezCasu ? '' : a.cas, start, kapacita, volne, online, onlineOtvorene, minula: start < new Date() };
   }
 
   function nacitajNovinky() {
@@ -88,7 +93,33 @@
     return m ? m[1] : '';
   }
 
-  async function rezervuj(data) {
+  function posliMailom(a, d) {
+    const termin = `${DNI[a.start.getDay()]} ${fDlho(a.start)}${a.cas ? ' o ' + a.cas : ''}`;
+    const telo = [
+      'Dobrý deň,', '',
+      `${d.ucast === 'online' ? 'objednávam si vzorky na online degustáciu' : 'rezervujem si miesto na akciu'} ${a.nazov}.`, '',
+      `Termín: ${termin}`,
+      d.ucast === 'online'
+        ? `Účasť: online – prosím o zaslanie vzoriek (${d.pocet} ${sklon(d.pocet, 'balíček', 'balíčky', 'balíčkov')})`
+        : `Počet miest v bare: ${d.pocet}`,
+      d.ucast === 'online' ? `Adresa na doručenie: ${d.adresa}` : null,
+      `Meno: ${d.meno}`,
+      `E-mail: ${d.email}`,
+      `Telefón: ${d.telefon}`,
+      d.poznamka ? `Poznámka: ${d.poznamka}` : null,
+      '', 'Ďakujem.'
+    ].filter(x => x !== null).join('\r\n');
+    const adresa = 'mailto:' + (CFG.EMAIL || '') +
+      '?subject=' + encodeURIComponent(`${d.ucast === 'online' ? 'Online degustácia' : 'Rezervácia'}: ${a.nazov} (${termin})`) +
+      '&body=' + encodeURIComponent(telo);
+    window.location.href = adresa;
+  }
+
+  async function rezervuj(data, akcia) {
+    if (MAILOM) {
+      posliMailom(akcia, data);
+      return { ok: true, mailom: true };
+    }
     if (DEMO) {
       await pauza(700);
       const a = (await nacitajAkcie()).find(x => x.id === data.akcia_id);
@@ -105,7 +136,10 @@
   function stav(a) {
     if (a.minula) return { cls: 'st-past', text: 'Prebehlo', moze: false };
     if (!a.kapacita) return { cls: 'st-free', text: 'Bez rezervácie', moze: false };
-    if (a.volne <= 0) return { cls: 'st-full', text: 'Vypredané', moze: false };
+    if (MAILOM) return { cls: 'st-open', text: 'Rezervovať miesto', moze: true };
+    if (a.volne <= 0) return a.onlineOtvorene
+      ? { cls: 'st-low', text: 'V bare plno · online voľné', moze: true }
+      : { cls: 'st-full', text: 'Vypredané', moze: false };
     if (a.volne <= 5) return { cls: 'st-low', text: 'Už len ' + miesta(a.volne), moze: true };
     return { cls: 'st-open', text: miesta(a.volne), moze: true };
   }
@@ -120,6 +154,7 @@
         <span class="ev-date"><span class="ev-d">${fKratko(a.start)}</span><span class="ev-w">${kedy(a)}</span></span>
         <h3 class="ev-title">${esc(a.nazov)}</h3>
         ${a.podnadpis ? `<p class="ev-sub">${esc(a.podnadpis)}</p>` : ''}
+        ${a.online && !a.minula ? '<span class="ev-tag">V bare aj online</span>' : ''}
         <span class="ev-foot"><span class="ev-price">${esc(cena(a.cena))}</span><span class="ev-state ${s.cls}">${s.text}</span></span>
       </a>
     </article>`;
@@ -134,7 +169,7 @@
       ['Termín', `${DNI[a.start.getDay()]} ${fDlho(a.start)}`],
       a.cas && ['Začiatok', a.cas],
       a.cena && ['Cena', cena(a.cena)],
-      ['Kde', 'Stromová 1, Trenčín']
+      ['Kde', a.online ? 'Stromová 1, Trenčín · aj online' : 'Stromová 1, Trenčín']
     ].filter(Boolean);
 
     let spodok;
@@ -155,21 +190,31 @@
       ${a.obrazok ? `<img class="ev-img" src="${esc(a.obrazok)}" alt="">` : ''}
       ${popis ? `<div class="ev-body">${popis}</div>` : ''}
       <dl class="ev-facts">${fakty.map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>
-      ${a.kapacita && !a.minula ? `<div class="cap"><span class="cap-bar"><i style="width:${pct}%"></i></span><span>${s.text}</span></div>` : ''}
+      ${a.kapacita && !a.minula && !MAILOM ? `<div class="cap"><span class="cap-bar"><i style="width:${pct}%"></i></span><span>${s.text}</span></div>` : ''}
       ${spodok}
     </div>`;
   }
 
   function formular(a) {
-    const max = Math.max(1, Math.min(MAX_OSOB, a.volne));
+    const barPlno = !MAILOM && a.kapacita > 0 && a.volne <= 0;
+    const max = MAILOM || barPlno ? MAX_OSOB : Math.max(1, Math.min(MAX_OSOB, a.volne));
+    const ucast = a.online ? `<fieldset class="ucast">
+        <legend>Ako sa zúčastníte</legend>
+        <label class="opt"><input type="radio" name="ucast" value="bar"${barPlno ? ' disabled' : ' checked'}><span><strong>V bare</strong>${barPlno ? 'kapacita baru je naplnená' : 'Stromová 1, Trenčín'}</span></label>
+        <label class="opt"><input type="radio" name="ucast" value="online"${a.onlineOtvorene ? (barPlno ? ' checked' : '') : ' disabled'}><span><strong>Online</strong>${a.onlineOtvorene ? 'vzorky vám pošleme domov, degustujete s nami cez prenos alebo zo záznamu' : `objednávky vzoriek sme uzavreli ${ONLINE_DNI} dní pred degustáciou`}</span></label>
+      </fieldset>
+      <div class="adresa-box" hidden>
+        <label class="fld"><span>Adresa na doručenie vzoriek</span><input name="adresa" autocomplete="street-address" maxlength="200" placeholder="Ulica a číslo, PSČ, mesto"></label>
+      </div>` : '';
     const moznosti = Array.from({ length: max }, (_, i) => `<option value="${i + 1}">${osob(i + 1)}</option>`).join('');
     const alko = ALKO.includes(a.typ);
     return `<form class="book" novalidate>
       <h3>Rezervovať miesto</h3>
+      ${ucast}
       <div class="hp" aria-hidden="true"><label>Nevypĺňajte <input name="web" tabindex="-1" autocomplete="off"></label></div>
       <div class="row2">
         <label class="fld"><span>Meno a priezvisko</span><input name="meno" autocomplete="name" maxlength="80" required></label>
-        <label class="fld"><span>Počet miest</span><select name="pocet">${moznosti}</select></label>
+        <label class="fld"><span class="pocet-lbl">Počet miest</span><select name="pocet">${moznosti}</select></label>
       </div>
       <div class="row2">
         <label class="fld"><span>E-mail</span><input type="email" name="email" autocomplete="email" maxlength="120" required></label>
@@ -180,7 +225,7 @@
       <label class="chk"><input type="checkbox" name="suhlas"> <span>Beriem na vedomie <a href="ochrana-udajov.html" target="_blank">informácie o spracovaní osobných údajov</a>.</span></label>
       <p class="form-msg" role="alert"></p>
       <button class="btn" type="submit">Rezervovať</button>
-      <p class="fine">Platí sa na mieste. ${DEMO ? '' : 'Potvrdenie vám príde e-mailom.'}</p>
+      <p class="fine">Platí sa na mieste. ${MAILOM ? 'Rezerváciu vám potvrdíme e-mailom alebo telefonicky.' : DEMO ? '' : 'Potvrdenie vám príde e-mailom.'}</p>
     </form>`;
   }
 
@@ -192,7 +237,8 @@
     const txt = k => String(fd.get(k) || '').trim();
     const data = {
       akcia_id: a.id, meno: txt('meno'), email: txt('email'), telefon: txt('telefon'),
-      pocet: parseInt(fd.get('pocet'), 10) || 1, poznamka: txt('poznamka'), suhlas: !!fd.get('suhlas'), web: txt('web')
+      pocet: parseInt(fd.get('pocet'), 10) || 1, poznamka: txt('poznamka'), suhlas: !!fd.get('suhlas'), web: txt('web'),
+      ucast: String(fd.get('ucast') || 'bar'), adresa: txt('adresa')
     };
 
     $$('.bad', f).forEach(x => x.classList.remove('bad'));
@@ -201,6 +247,7 @@
     if (data.meno.length < 2) zle('meno', 'Vyplňte meno.');
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(data.email)) zle('email', 'Skontrolujte e-mail.');
     if (data.telefon.replace(/\D/g, '').length < 9) zle('telefon', 'Skontrolujte telefónne číslo.');
+    if (data.ucast === 'online' && data.adresa.length < 10) zle('adresa', 'Doplňte adresu, kam pošleme vzorky.');
     if (f.elements.vek && !f.elements.vek.checked) zle('vek', 'Degustácie sú len pre plnoletých.');
     if (!data.suhlas) zle('suhlas', 'Potvrďte, prosím, informácie o spracovaní údajov.');
     if (chyby.length) {
@@ -213,15 +260,23 @@
     btn.textContent = 'Odosielam…';
     msg.textContent = '';
     try {
-      const res = await rezervuj(data);
+      const res = await rezervuj(data, a);
       if (!res || !res.ok) throw new Error((res && res.chyba) || 'Rezerváciu sa nepodarilo uložiť.');
       if (typeof res.volne === 'number') a.volne = res.volne;
       const box = document.createElement('div');
       box.className = 'ok-box';
       box.tabIndex = -1;
-      box.innerHTML = `<h3>Miesto je vaše</h3>
-        <p>Ďakujeme, ${esc(data.meno.split(/\s+/)[0])}! Rezervovali sme <strong>${osob(data.pocet)}</strong> na ${esc(a.nazov)}, ${DNI[a.start.getDay()]} ${fDlho(a.start)}${a.cas ? ' o ' + esc(a.cas) : ''}.</p>
-        <p>${DEMO ? '<em>Ukážkový režim – rezervácia sa nikam neuložila.</em>' : `Potvrdenie sme poslali na <strong>${esc(data.email)}</strong>.`} Ak nemôžete prísť, dajte nám vedieť na <a href="${TEL_HREF}">${esc(TEL)}</a>.</p>`;
+      const online = data.ucast === 'online';
+      const balicky = `<strong>${data.pocet} ${sklon(data.pocet, 'balíček', 'balíčky', 'balíčkov')}</strong>`;
+      const kedyText = `${esc(a.nazov)}, ${DNI[a.start.getDay()]} ${fDlho(a.start)}${a.cas ? ' o ' + esc(a.cas) : ''}`;
+      box.innerHTML = res.mailom
+        ? `<h3>Ešte jedno kliknutie</h3>
+        <p>Otvorili sme vám e-mail ${online ? `s objednávkou vzoriek (${balicky})` : `s rezerváciou pre <strong>${osob(data.pocet)}</strong>`} na ${kedyText}. Stačí ho odoslať.</p>
+        <p>Ak sa e-mail neotvoril, napíšte nám na <a href="mailto:${esc(CFG.EMAIL || '')}">${esc(CFG.EMAIL || '')}</a> alebo zavolajte na <a href="${TEL_HREF}">${esc(TEL)}</a>. Rezerváciu vám potvrdíme.</p>`
+        : `<h3>${online ? 'Objednávka prijatá' : 'Miesto je vaše'}</h3>
+        <p>Ďakujeme, ${esc(data.meno.split(/\s+/)[0])}! Zapísali sme ${online ? `objednávku vzoriek (${balicky})` : `miesto pre <strong>${osob(data.pocet)}</strong>`} na ${kedyText}.</p>
+        ${online ? '<p>Platbu a doručenie vzoriek s vami dohodneme e-mailom. Odkaz na prenos pošleme pred degustáciou a záznam vám zostane.</p>' : ''}
+        <p>${DEMO ? '<em>Ukážkový režim – nič sa neuložilo.</em>' : `Potvrdenie sme poslali na <strong>${esc(data.email)}</strong>.`} Ak niečo potrebujete zmeniť, zavolajte na <a href="${TEL_HREF}">${esc(TEL)}</a>.</p>`;
       f.replaceWith(box);
       box.focus();
       const cap = $('.cap', box.parentNode);
@@ -240,6 +295,22 @@
     const m = otvorModal(detailAkcie(a), 'm-akcia', `Detail akcie ${a.nazov}`);
     const f = $('form.book', m);
     if (f) f.addEventListener('submit', e => odoslat(e, a, f));
+    if (f && a.online) {
+      // prepínač V bare / Online: adresa, názov poľa a počet možností
+      const prepni = () => {
+        const online = f.elements.ucast.value === 'online';
+        $('.adresa-box', f).hidden = !online;
+        $('.pocet-lbl', f).textContent = online ? 'Počet balíčkov vzoriek' : 'Počet miest';
+        const max = online || MAILOM ? MAX_OSOB : Math.max(1, Math.min(MAX_OSOB, a.volne));
+        const sel = f.elements.pocet;
+        const bolo = parseInt(sel.value, 10) || 1;
+        sel.innerHTML = Array.from({ length: max }, (_, i) =>
+          `<option value="${i + 1}">${online ? `${i + 1} ${sklon(i + 1, 'balíček', 'balíčky', 'balíčkov')}` : osob(i + 1)}</option>`).join('');
+        sel.value = String(Math.min(bolo, max));
+      };
+      f.addEventListener('change', e => { if (e.target.name === 'ucast') prepni(); });
+      prepni();
+    }
     history.replaceState(null, '', '#' + encodeURIComponent(a.id));
   }
 
@@ -522,7 +593,7 @@
   if (stranka === 'akcie') initAkcie();
   if (stranka === 'novinky') initNovinky();
 
-  if (DEMO) {
+  if (DEMO && !MAILOM) {
     const b = document.createElement('div');
     b.className = 'demo-badge';
     b.textContent = 'Ukážkový režim';

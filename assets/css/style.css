@@ -177,6 +177,7 @@ button { font: inherit; }
 .ev-state { color: var(--muted); }
 .st-open { color: var(--acc); } .st-low { color: #f2ac62; } .st-full { color: var(--err); }
 .ev-card.is-past { opacity: .5; filter: saturate(.35); }
+.ev-tag { align-self: flex-start; margin: -8px 0 20px; padding: 3px 10px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--acc) 45%, transparent); color: var(--acc); font: 600 11px var(--f-cond); letter-spacing: .16em; text-transform: uppercase; }
 .ev-card.is-past:hover { transform: none; box-shadow: none; }
 
 /* ============ O nás ============ */
@@ -322,6 +323,14 @@ body.modal-open { overflow: hidden; }
 .chk { display: flex; align-items: flex-start; gap: 12px; margin: 8px 0 10px; font-size: 15px; color: #d8cfc0; cursor: pointer; }
 .chk input { flex: none; width: 20px; height: 20px; margin-top: 2px; accent-color: var(--gold); }
 .chk input.bad { outline: 2px solid var(--err); outline-offset: 2px; }
+.ucast { display: grid; gap: 10px; margin: 0 0 18px; padding: 0; border: 0; }
+.ucast legend { padding: 0; margin-bottom: 8px; font: 600 12px var(--f-cond); letter-spacing: .2em; text-transform: uppercase; color: var(--muted); }
+.opt { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border: 1px solid var(--line2); border-radius: 10px; cursor: pointer; transition: border-color .2s, background .2s; }
+.opt input { flex: none; width: 18px; height: 18px; margin-top: 3px; accent-color: var(--gold); }
+.opt span { color: var(--muted); font-size: 15px; line-height: 1.4; }
+.opt strong { display: block; color: #fff; font: 600 16px var(--f-cond); letter-spacing: .08em; text-transform: uppercase; }
+.opt:has(input:checked) { border-color: var(--gold); background: rgba(217, 183, 122, .08); }
+.opt:has(input:disabled) { opacity: .45; cursor: not-allowed; }
 .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
 .form-msg { min-height: 1.4em; margin: 8px 0; color: var(--err); font-size: 15px; }
 .fine { margin: 12px 0 0; font-size: 14px; color: var(--dim); }

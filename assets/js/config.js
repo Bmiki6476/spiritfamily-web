@@ -4,6 +4,9 @@ window.SF_CONFIG = {
   // Kým je prázdna, web beží v ukážkovom režime z data/akcie.json a data/novinky.json.
   API_URL: '',
 
+  // true = kým nie je API_URL, rezervácia sa odošle e-mailom na adresu nižšie (web funguje aj bez Googlu)
+  REZERVACIA_MAILOM: true,
+
   TELEFON: '0911 365 920',
   EMAIL: 'miroslav.balaj@spiritfamily.sk',
   FACEBOOK: 'https://www.facebook.com/Spirit.Family.Trencin',
@@ -11,5 +14,8 @@ window.SF_CONFIG = {
   YOUTUBE: 'https://www.youtube.com/channel/UCdaCXXBIjzJ_YnHXy_MoJWQ',
 
   // Najviac miest na jednu rezerváciu (musí sedieť s MAX_OSOB_NA_REZERVACIU v backend/Code.gs)
-  MAX_OSOB: 6
+  MAX_OSOB: 6,
+
+  // Online degustácia: vzorky treba objednať aspoň toľko dní vopred (musí sedieť s Code.gs)
+  ONLINE_UZAVIERKA_DNI: 5
 };
