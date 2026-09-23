@@ -437,3 +437,14 @@ body.modal-open { overflow: hidden; }
   .ftr-hours li { white-space: normal; }
 }
 .fld input[type=date], .fld input[type=time] { color-scheme: dark; min-height: 49px; }
+
+/* Degustácia z domu (akcie.html#online) */
+.online-grid { display: grid; grid-template-columns: 1fr 1.25fr; gap: 48px; align-items: center; }
+.online-kroky { margin: 26px 0 30px; padding-left: 1.3em; color: var(--muted); }
+.online-kroky li { margin: 10px 0; padding-left: 6px; }
+.online-kroky li::marker { color: var(--gold); font: 400 22px var(--f-display); }
+.online-kroky strong { color: var(--gold2); font-weight: 600; }
+.online-video video { display: block; width: 100%; height: auto; border-radius: var(--radius); border: 1px solid var(--line2); background: #000; box-shadow: 0 30px 70px #0008; }
+@media (max-width: 900px) {
+  .online-grid { grid-template-columns: 1fr; gap: 32px; }
+}
