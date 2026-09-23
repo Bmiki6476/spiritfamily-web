@@ -7,7 +7,7 @@ window.SF_CONFIG = {
   // true = kým nie je API_URL, rezervácia sa odošle e-mailom na adresu nižšie (web funguje aj bez Googlu)
   REZERVACIA_MAILOM: true,
 
-  TELEFON: '0911 365 920',
+  TELEFON: '0914 365 920',
   EMAIL: 'miroslav.balaj@spiritfamily.sk',
   FACEBOOK: 'https://www.facebook.com/Spirit.Family.Trencin',
   INSTAGRAM: 'https://instagram.com/spirit_family_tn',
@@ -17,5 +17,11 @@ window.SF_CONFIG = {
   MAX_OSOB: 6,
 
   // Online degustácia: vzorky treba objednať aspoň toľko dní vopred (musí sedieť s Code.gs)
-  ONLINE_UZAVIERKA_DNI: 5
+  ONLINE_UZAVIERKA_DNI: 5,
+
+  // Online degustácia: doprava vzoriek cez Packetu (€ za balíček, pripočíta sa k cene akcie)
+  ONLINE_DOPRAVA: 3,
+
+  // Súkromná degustácia (sekcia Súkromné akcie)
+  SUKROMNA_CENA: '120 € pre 4 osoby'
 };

@@ -19,6 +19,8 @@
   const DNI_KR = ['Po', 'Ut', 'St', 'Št', 'Pi', 'So', 'Ne'];
   const ALKO = ['rum', 'whisky', 'tequila', 'gin', 'pivo', 'degustacia'];
   const ONLINE_DNI = CFG.ONLINE_UZAVIERKA_DNI || 5; // online vzorky treba objednať aspoň toľko dní vopred
+  const DOPRAVA = Number(CFG.ONLINE_DOPRAVA) || 0; // Packeta, € za balíček
+  const DOPRAVA_TEXT = DOPRAVA ? `+ ${DOPRAVA} € doprava (Packeta)` : '';
 
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
@@ -168,7 +170,8 @@
     const fakty = [
       ['Termín', `${DNI[a.start.getDay()]} ${fDlho(a.start)}`],
       a.cas && ['Začiatok', a.cas],
-      a.cena && ['Cena', cena(a.cena)],
+      a.cena && [a.online ? 'Cena v bare' : 'Cena', cena(a.cena)],
+      a.cena && a.online && ['Online', `${cena(a.cena)} ${DOPRAVA_TEXT}`.trim()],
       ['Kde', a.online ? 'Stromová 1, Trenčín · aj online' : 'Stromová 1, Trenčín']
     ].filter(Boolean);
 
@@ -201,7 +204,7 @@
     const ucast = a.online ? `<fieldset class="ucast">
         <legend>Ako sa zúčastníte</legend>
         <label class="opt"><input type="radio" name="ucast" value="bar"${barPlno ? ' disabled' : ' checked'}><span><strong>V bare</strong>${barPlno ? 'kapacita baru je naplnená' : 'Stromová 1, Trenčín'}</span></label>
-        <label class="opt"><input type="radio" name="ucast" value="online"${a.onlineOtvorene ? (barPlno ? ' checked' : '') : ' disabled'}><span><strong>Online</strong>${a.onlineOtvorene ? 'vzorky vám pošleme domov, degustujete s nami cez prenos alebo zo záznamu' : `objednávky vzoriek sme uzavreli ${ONLINE_DNI} dní pred degustáciou`}</span></label>
+        <label class="opt"><input type="radio" name="ucast" value="online"${a.onlineOtvorene ? (barPlno ? ' checked' : '') : ' disabled'}><span><strong>Online</strong>${a.onlineOtvorene ? `vzorky vám pošleme domov${DOPRAVA ? ` cez Packetu (${DOPRAVA} € doprava)` : ''}, degustujete s nami cez prenos alebo zo záznamu` : `objednávky vzoriek sme uzavreli ${ONLINE_DNI} dní pred degustáciou`}</span></label>
       </fieldset>
       <div class="adresa-box" hidden>
         <label class="fld"><span>Adresa na doručenie vzoriek</span><input name="adresa" autocomplete="street-address" maxlength="200" placeholder="Ulica a číslo, PSČ, mesto"></label>
@@ -225,7 +228,7 @@
       <label class="chk"><input type="checkbox" name="suhlas"> <span>Beriem na vedomie <a href="ochrana-udajov.html" target="_blank">informácie o spracovaní osobných údajov</a>.</span></label>
       <p class="form-msg" role="alert"></p>
       <button class="btn" type="submit">Rezervovať</button>
-      <p class="fine">Platí sa na mieste. ${MAILOM ? 'Rezerváciu vám potvrdíme e-mailom alebo telefonicky.' : DEMO ? '' : 'Potvrdenie vám príde e-mailom.'}</p>
+      <p class="fine">${a.online ? 'V bare sa platí na mieste, pri online degustácii vám platobné údaje pošleme e-mailom.' : 'Platí sa na mieste.'} ${MAILOM ? 'Rezerváciu vám potvrdíme e-mailom alebo telefonicky.' : DEMO ? '' : 'Potvrdenie vám príde e-mailom.'}</p>
     </form>`;
   }
 
@@ -275,7 +278,7 @@
         <p>Ak sa e-mail neotvoril, napíšte nám na <a href="mailto:${esc(CFG.EMAIL || '')}">${esc(CFG.EMAIL || '')}</a> alebo zavolajte na <a href="${TEL_HREF}">${esc(TEL)}</a>. Rezerváciu vám potvrdíme.</p>`
         : `<h3>${online ? 'Objednávka prijatá' : 'Miesto je vaše'}</h3>
         <p>Ďakujeme, ${esc(data.meno.split(/\s+/)[0])}! Zapísali sme ${online ? `objednávku vzoriek (${balicky})` : `miesto pre <strong>${osob(data.pocet)}</strong>`} na ${kedyText}.</p>
-        ${online ? '<p>Platbu a doručenie vzoriek s vami dohodneme e-mailom. Odkaz na prenos pošleme pred degustáciou a záznam vám zostane.</p>' : ''}
+        ${online ? '<p>Platobné údaje a informácie k doručeniu vzoriek vám pošleme e-mailom. Odkaz na prenos pošleme pred degustáciou a záznam vám zostane.</p>' : ''}
         <p>${DEMO ? '<em>Ukážkový režim – nič sa neuložilo.</em>' : `Potvrdenie sme poslali na <strong>${esc(data.email)}</strong>.`} Ak niečo potrebujete zmeniť, zavolajte na <a href="${TEL_HREF}">${esc(TEL)}</a>.</p>`;
       f.replaceWith(box);
       box.focus();
@@ -312,6 +315,150 @@
       prepni();
     }
     history.replaceState(null, '', '#' + encodeURIComponent(a.id));
+  }
+
+  /* ---------- Súkromné akcie (dopyt) ---------- */
+  const DRUHY = {
+    degustacia: { nazov: 'Súkromná degustácia', kratko: 'Degustácia', popis: CFG.SUKROMNA_CENA || '', typ: 'whisky' },
+    podujatie: { nazov: 'Prenájom baru', kratko: 'Prenájom baru', popis: 'oslava, večierok, stretnutie', typ: 'ine' }
+  };
+
+  function formularDopyt(druh) {
+    const zajtra = new Date(Date.now() + 864e5);
+    const min = `${zajtra.getFullYear()}-${String(zajtra.getMonth() + 1).padStart(2, '0')}-${String(zajtra.getDate()).padStart(2, '0')}`;
+    return `<form class="book" novalidate>
+      <fieldset class="ucast dopyt-druh">
+        <legend>Čo si objednávate</legend>
+        ${Object.entries(DRUHY).map(([k, d]) => `<label class="opt"><input type="radio" name="druh" value="${k}"${k === druh ? ' checked' : ''}><span><strong>${d.kratko}</strong>${esc(d.popis)}</span></label>`).join('')}
+      </fieldset>
+      <div class="hp" aria-hidden="true"><label>Nevypĺňajte <input name="web" tabindex="-1" autocomplete="off"></label></div>
+      <label class="fld destilat"><span>Čo chcete ochutnať</span><select name="destilat"><option>Whisky</option><option>Rum</option><option>Whisky aj rum</option><option>Nechám na vás</option></select></label>
+      <div class="row2">
+        <label class="fld"><span>Termín</span><input type="date" name="datum" min="${min}" required></label>
+        <label class="fld"><span>Čas <em>(približne)</em></span><input type="time" name="cas" step="900"></label>
+      </div>
+      <div class="row2">
+        <label class="fld"><span>Meno a priezvisko</span><input name="meno" autocomplete="name" maxlength="80" required></label>
+        <label class="fld"><span>Počet osôb</span><input type="number" name="pocet" min="1" max="80" inputmode="numeric" value="4" required></label>
+      </div>
+      <div class="row2">
+        <label class="fld"><span>E-mail</span><input type="email" name="email" autocomplete="email" maxlength="120" required></label>
+        <label class="fld"><span>Telefón</span><input type="tel" name="telefon" autocomplete="tel" maxlength="30" placeholder="09xx xxx xxx" required></label>
+      </div>
+      <label class="fld"><span>Poznámka <em>(príležitosť, želania)</em></span><textarea name="poznamka" rows="3" maxlength="800"></textarea></label>
+      <label class="chk vek-chk"><input type="checkbox" name="vek"> <span>Všetci účastníci degustácie majú viac ako 18 rokov.</span></label>
+      <label class="chk"><input type="checkbox" name="suhlas"> <span>Beriem na vedomie <a href="ochrana-udajov.html" target="_blank">informácie o spracovaní osobných údajov</a>.</span></label>
+      <p class="form-msg" role="alert"></p>
+      <button class="btn" type="submit">Odoslať dopyt</button>
+      <p class="fine">Termín vám potvrdíme e-mailom alebo telefonicky, ${MAILOM ? 'zvyčajne do dvoch dní' : 'podrobnosti a cenu nájdete v e-maile, ktorý vám hneď príde'}.</p>
+    </form>`;
+  }
+
+  function otvorDopyt(druh) {
+    druh = DRUHY[druh] ? druh : 'degustacia';
+    const m = otvorModal(`<div class="ev-detail t-${DRUHY[druh].typ}">
+      <div class="ev-detail-head">
+        <span class="ev-ico" aria-hidden="true">${IKONY[DRUHY[druh].typ]}</span>
+        <div>
+          <p class="eyebrow">Na objednávku</p>
+          <h2>Súkromná akcia</h2>
+          <p class="ev-sub">Napíšte nám termín a počet ľudí, ozveme sa s potvrdením.</p>
+        </div>
+      </div>
+      ${formularDopyt(druh)}
+    </div>`, 'm-akcia', 'Súkromná akcia');
+    const f = $('form.book', m);
+    const prepni = () => {
+      const deg = f.elements.druh.value === 'degustacia';
+      $('.destilat', f).hidden = !deg;
+      $('.vek-chk', f).hidden = !deg;
+      const det = $('.ev-detail', m);
+      det.className = `ev-detail t-${deg ? 'whisky' : 'ine'}`;
+      $('.ev-detail-head .ev-ico', m).innerHTML = IKONY[deg ? 'whisky' : 'ine'];
+    };
+    f.addEventListener('change', e => { if (e.target.name === 'druh') prepni(); });
+    f.addEventListener('submit', e => odoslatDopyt(e, f));
+    prepni();
+  }
+
+  function dopytMailom(d) {
+    const druh = DRUHY[d.druh];
+    const kedy = `${fDatum(d.datum + 'T12:00')}${d.cas ? ' okolo ' + d.cas : ''}`;
+    const telo = [
+      'Dobrý deň,', '',
+      d.druh === 'degustacia' ? 'mám záujem o súkromnú degustáciu.' : 'mám záujem o prenájom baru na súkromnú udalosť.', '',
+      `Termín: ${kedy}`,
+      `Počet osôb: ${d.pocet}`,
+      d.druh === 'degustacia' ? `Destilát: ${d.destilat}` : null,
+      `Meno: ${d.meno}`,
+      `E-mail: ${d.email}`,
+      `Telefón: ${d.telefon}`,
+      d.poznamka ? `Poznámka: ${d.poznamka}` : null,
+      '', 'Ďakujem.'
+    ].filter(x => x !== null).join('\r\n');
+    window.location.href = 'mailto:' + (CFG.EMAIL || '') +
+      '?subject=' + encodeURIComponent(`${druh.nazov}: ${kedy}, ${d.pocet} os.`) +
+      '&body=' + encodeURIComponent(telo);
+  }
+
+  async function odoslatDopyt(e, f) {
+    e.preventDefault();
+    const msg = $('.form-msg', f);
+    const btn = $('button[type=submit]', f);
+    const fd = new FormData(f);
+    const txt = k => String(fd.get(k) || '').trim();
+    const d = {
+      druh: txt('druh') === 'podujatie' ? 'podujatie' : 'degustacia', datum: txt('datum'), cas: txt('cas'),
+      pocet: parseInt(fd.get('pocet'), 10) || 0, destilat: txt('destilat'), meno: txt('meno'), email: txt('email'),
+      telefon: txt('telefon'), poznamka: txt('poznamka'), suhlas: !!fd.get('suhlas'), web: txt('web')
+    };
+
+    $$('.bad', f).forEach(x => x.classList.remove('bad'));
+    const chyby = [];
+    const zle = (meno, text) => { f.elements[meno] && f.elements[meno].classList.add('bad'); chyby.push(text); };
+    const den = new Date(d.datum + 'T23:59');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(d.datum) || isNaN(den) || den < new Date()) zle('datum', 'Vyberte termín, najskôr zajtra.');
+    if (!(d.pocet >= 1 && d.pocet <= 80)) zle('pocet', 'Zadajte počet osôb.');
+    if (d.meno.length < 2) zle('meno', 'Vyplňte meno.');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(d.email)) zle('email', 'Skontrolujte e-mail.');
+    if (d.telefon.replace(/\D/g, '').length < 9) zle('telefon', 'Skontrolujte telefónne číslo.');
+    if (d.druh === 'degustacia' && !f.elements.vek.checked) zle('vek', 'Degustácie sú len pre plnoletých.');
+    if (!d.suhlas) zle('suhlas', 'Potvrďte, prosím, informácie o spracovaní údajov.');
+    if (chyby.length) {
+      msg.textContent = chyby[0];
+      $('.bad', f).focus();
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Odosielam…';
+    msg.textContent = '';
+    try {
+      let res;
+      if (MAILOM) { dopytMailom(d); res = { ok: true, mailom: true }; }
+      else if (DEMO) { await pauza(700); res = { ok: true }; }
+      else res = await (await fetch(API, { method: 'POST', body: JSON.stringify({ a: 'dopyt', ...d }) })).json();
+      if (!res || !res.ok) throw new Error((res && res.chyba) || 'Dopyt sa nepodarilo odoslať.');
+      const kedyText = `${fDatum(d.datum + 'T12:00')}, ${osob(d.pocet)}`;
+      const box = document.createElement('div');
+      box.className = 'ok-box';
+      box.tabIndex = -1;
+      box.innerHTML = res.mailom
+        ? `<h3>Ešte jedno kliknutie</h3>
+        <p>Otvorili sme vám e-mail s dopytom (${esc(kedyText)}). Stačí ho odoslať.</p>
+        <p>Ak sa e-mail neotvoril, napíšte nám na <a href="mailto:${esc(CFG.EMAIL || '')}">${esc(CFG.EMAIL || '')}</a> alebo zavolajte na <a href="${TEL_HREF}">${esc(TEL)}</a>.</p>`
+        : `<h3>Dopyt prijatý</h3>
+        <p>Ďakujeme, ${esc(d.meno.split(/\s+/)[0])}! Máme váš dopyt na ${esc(kedyText)}.</p>
+        <p>${DEMO ? '<em>Ukážkový režim – nič sa neodoslalo.</em>' : `Podrobnosti sme poslali na <strong>${esc(d.email)}</strong>. Termín vám potvrdíme čo najskôr.`}</p>`;
+      f.replaceWith(box);
+      box.focus();
+    } catch (err) {
+      msg.textContent = /fetch|network/i.test(err.message)
+        ? `Nepodarilo sa spojiť so serverom. Skúste to znova alebo zavolajte na ${TEL}.`
+        : err.message;
+      btn.disabled = false;
+      btn.textContent = 'Odoslať dopyt';
+    }
   }
 
   /* ---------- Modálne okno ---------- */
@@ -575,6 +722,12 @@
 
   /* ---------- Štart ---------- */
   document.addEventListener('keydown', e => { if (e.key === 'Escape') zatvorModal(); });
+  document.addEventListener('click', e => {
+    const t = e.target.closest('[data-dopyt]');
+    if (!t || t.closest('.modal') || e.ctrlKey || e.metaKey || e.shiftKey) return;
+    e.preventDefault();
+    otvorDopyt(t.dataset.dopyt);
+  });
   document.addEventListener('click', e => {
     const v = e.target.closest('[data-video]');
     if (!v || e.ctrlKey || e.metaKey || e.shiftKey) return;

@@ -8,10 +8,10 @@
       "cas": "19:30",
       "nazov": "Rumová degustácia",
       "podnadpis": "Sedem pohárov · tri školy · jeden Karibik",
-      "popis": "Sedem vzoriek rumu naprieč tromi tradíciami Karibiku – španielskou, anglickou aj francúzskou. K degustácii patrí občerstvenie.\nKapacita je obmedzená, miesto si rezervujte vopred.",
+      "popis": "Sedem vzoriek rumu naprieč tromi tradíciami Karibiku – španielskou, anglickou aj francúzskou. K degustácii patrí občerstvenie.\nKapacita je 30 miest, miesto si rezervujte vopred.",
       "cena": "29 €",
       "typ": "rum",
-      "kapacita": 20,
+      "kapacita": 30,
       "volne": 0
     },
     {
@@ -20,11 +20,11 @@
       "cas": "19:30",
       "nazov": "Johnnie Walker",
       "podnadpis": "Príbeh kráčajúceho muža v siedmich pohároch",
-      "popis": "Degustácia whisky Johnnie Walker – sedem pohárov a príbeh jednej z najznámejších značiek škótskej whisky, od obchodu s potravinami v Kilmarnocku až po dnešok.\nKapacita je obmedzená, miesto si rezervujte vopred.",
+      "popis": "Degustácia whisky Johnnie Walker – sedem pohárov a príbeh jednej z najznámejších značiek škótskej whisky, od obchodu s potravinami v Kilmarnocku až po dnešok.\nKapacita je 30 miest, miesto si rezervujte vopred.",
       "cena": "35 €",
       "typ": "whisky",
-      "kapacita": 20,
-      "volne": 2
+      "kapacita": 30,
+      "volne": 12
     },
     {
       "id": "2026-09-18-latino-dance-night",
@@ -32,11 +32,10 @@
       "cas": "19:30",
       "nazov": "Latino Dance Night",
       "podnadpis": "Salsa · Bachata · Kizomba",
-      "popis": "Latino večer s MS Dance Studio. Najprv lekcia, potom párty.\nPríďte sami, v páre alebo s partiou.",
+      "popis": "Latino večer s MS Dance Studio. Najprv lekcia, potom párty.\nPríďte sami, v páre alebo s partiou. Vstup sa nerezervuje cez náš web.",
       "cena": "",
       "typ": "tanec",
-      "kapacita": 40,
-      "volne": 27
+      "kapacita": 0
     },
     {
       "id": "2026-09-25-tequila",
@@ -44,11 +43,11 @@
       "cas": "19:30",
       "nazov": "Tequila",
       "podnadpis": "Zabudnite na soľ a citrón",
-      "popis": "Prvá tequilová degustácia v Spirit Family. Ukážeme, že tequila je oveľa viac než panák so soľou a citrónom. Občerstvenie je v cene.\nKapacita je obmedzená, miesto si rezervujte vopred.",
+      "popis": "Prvá tequilová degustácia v Spirit Family. Ukážeme, že tequila je oveľa viac než panák so soľou a citrónom. Občerstvenie je v cene.\nKapacita je 30 miest, miesto si rezervujte vopred.",
       "cena": "25 €",
       "typ": "tequila",
-      "kapacita": 20,
-      "volne": 4
+      "kapacita": 30,
+      "volne": 14
     },
     {
       "id": "2026-10-16-rumova-degustacia",
@@ -57,10 +56,10 @@
       "nazov": "Rumová degustácia",
       "podnadpis": "Večer s rumom – vzorky a príbehy značiek",
       "popis": "Mesačná rumová degustácia v bare: sedem až osem vzoriek a rozprávanie o značkách, ktoré za nimi stoja.\nNemôžete prísť do Trenčína? Objednajte si vzorky domov a degustujte s nami online – naživo alebo neskôr zo záznamu. Vzorky objednajte aspoň 5 dní vopred.",
-      "cena": "",
+      "cena": "29 €",
       "typ": "rum",
-      "kapacita": 20,
-      "volne": 20,
+      "kapacita": 30,
+      "volne": 30,
       "online": true
     },
     {
@@ -70,10 +69,10 @@
       "nazov": "Whisková degustácia",
       "podnadpis": "Večer s whisky – vzorky a príbehy značiek",
       "popis": "Mesačná whisková degustácia v bare: sedem až osem vzoriek a rozprávanie o značkách, ktoré za nimi stoja.\nNemôžete prísť do Trenčína? Objednajte si vzorky domov a degustujte s nami online – naživo alebo neskôr zo záznamu. Vzorky objednajte aspoň 5 dní vopred.",
-      "cena": "",
+      "cena": "35 €",
       "typ": "whisky",
-      "kapacita": 20,
-      "volne": 20,
+      "kapacita": 30,
+      "volne": 30,
       "online": true
     }
   ]
