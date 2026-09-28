@@ -1,0 +1,10 @@
+{
+  "poznamka": "Doplnky k akciám z Google tabuľky podľa id akcie. Čo je tu vyplnené, má prednosť pred tabuľkou (popis, podnadpis, obrázok).",
+  "akcie": {
+    "2026-10-16-rumova-degustacia": {
+      "podnadpis": "Sedem rumov · od Kuby po Guatemalu",
+      "popis": "Októbrová rumová degustácia – sedem rumov z Karibiku a Latinskej Ameriky, od kubánskej klasiky až po guatemalský Zacapa, ktorý dozrieva vo výške 2 300 metrov. Pri každom pohári porozprávame príbeh značky a čím je jej rum iný. K degustácii patrí občerstvenie.\nNa degustácii ochutnáte:\n• Ron Zacapa XO – Guatemala · dokončený v sudoch po koňaku\n• Espero Reserva Exclusiva – Dominikánska republika\n• Diplomático Selección de Familia – Venezuela\n• Havana Club Añejo 7 Años – Kuba\n• Ron Zacapa Solera Gran Reserva – Guatemala · systém solera\n• Cayora Caribbean Rum & Spice – Karibik · korenistý\n• Galeon Caribbean Gold – Karibik\nV bare je 30 miest, miesto si rezervujte vopred.\nNemôžete prísť do Trenčína? Objednajte si vzorky domov a degustujte s nami online – naživo alebo neskôr zo záznamu. Online objednávky prijímame do nedele 11. 10.",
+      "obrazok": "img/akcie/rum-2026-10.jpg"
+    }
+  }
+}

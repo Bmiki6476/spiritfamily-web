@@ -54,13 +54,14 @@
       "datum": "2026-10-16",
       "cas": "19:30",
       "nazov": "Rumová degustácia",
-      "podnadpis": "Večer s rumom – vzorky a príbehy značiek",
-      "popis": "Mesačná rumová degustácia v bare: sedem až osem vzoriek a rozprávanie o značkách, ktoré za nimi stoja.\nNemôžete prísť do Trenčína? Objednajte si vzorky domov a degustujte s nami online – naživo alebo neskôr zo záznamu. Vzorky objednajte aspoň 5 dní vopred.",
+      "podnadpis": "Sedem rumov · od Kuby po Guatemalu",
+      "popis": "Októbrová rumová degustácia – sedem rumov z Karibiku a Latinskej Ameriky, od kubánskej klasiky až po guatemalský Zacapa, ktorý dozrieva vo výške 2 300 metrov. Pri každom pohári porozprávame príbeh značky a čím je jej rum iný. K degustácii patrí občerstvenie.\nNa degustácii ochutnáte:\n• Ron Zacapa XO – Guatemala · dokončený v sudoch po koňaku\n• Espero Reserva Exclusiva – Dominikánska republika\n• Diplomático Selección de Familia – Venezuela\n• Havana Club Añejo 7 Años – Kuba\n• Ron Zacapa Solera Gran Reserva – Guatemala · systém solera\n• Cayora Caribbean Rum & Spice – Karibik · korenistý\n• Galeon Caribbean Gold – Karibik\nV bare je 30 miest, miesto si rezervujte vopred.\nNemôžete prísť do Trenčína? Objednajte si vzorky domov a degustujte s nami online – naživo alebo neskôr zo záznamu. Online objednávky prijímame do nedele 11. 10.",
       "cena": "29 €",
       "typ": "rum",
       "kapacita": 30,
       "volne": 30,
-      "online": true
+      "online": true,
+      "obrazok": "img/akcie/rum-2026-10.jpg"
     },
     {
       "id": "2026-10-30-whiskova-degustacia",

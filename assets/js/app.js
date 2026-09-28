@@ -63,8 +63,10 @@
   let akcieCache = null;
   function nacitajAkcie() {
     if (!akcieCache) {
-      akcieCache = getJSON(DEMO ? 'data/akcie.json' : API + '?a=akcie')
-        .then(d => (d.akcie || []).map(pripravAkciu).filter(Boolean).sort((a, b) => a.start - b.start));
+      // data/akcie-doplnky.json: popis, podnadpis či obrázok k akcii podľa id, má prednosť pred tabuľkou
+      const doplnky = getJSON('data/akcie-doplnky.json').then(d => d.akcie || {}).catch(() => ({}));
+      akcieCache = Promise.all([getJSON(DEMO ? 'data/akcie.json' : API + '?a=akcie'), doplnky])
+        .then(([d, dopl]) => (d.akcie || []).map(a => pripravAkciu({ ...a, ...dopl[a.id] })).filter(Boolean).sort((a, b) => a.start - b.start));
     }
     return akcieCache;
   }
@@ -162,9 +164,24 @@
     </article>`;
   }
 
+  // Popis z tabuľky: každý riadok je odsek, riadky začínajúce „•“ alebo „-“ tvoria zoznam (napr. vzorky degustácie).
+  // „Názov – doplnok“ v zozname: názov tučne, doplnok menším písmom.
+  function textPopisu(txt) {
+    let html = '', zoznam = [];
+    const zavri = () => { if (zoznam.length) html += `<ul class="ev-list">${zoznam.join('')}</ul>`; zoznam = []; };
+    String(txt || '').split(/\n+/).map(r => r.trim()).filter(Boolean).forEach(r => {
+      const m = r.match(/^[•\-–·*]\s*(.+)$/);
+      if (!m) { zavri(); html += `<p>${esc(r)}</p>`; return; }
+      const [nazov, ...doplnok] = m[1].split(' – ');
+      zoznam.push(`<li><strong>${esc(nazov)}</strong>${doplnok.length ? `<span>${esc(doplnok.join(' – '))}</span>` : ''}</li>`);
+    });
+    zavri();
+    return html;
+  }
+
   function detailAkcie(a) {
     const s = stav(a);
-    const popis = String(a.popis || '').split(/\n+/).filter(Boolean).map(p => `<p>${esc(p)}</p>`).join('');
+    const popis = textPopisu(a.popis);
     const obsadene = a.kapacita ? a.kapacita - a.volne : 0;
     const pct = a.kapacita ? Math.min(100, Math.round((obsadene / a.kapacita) * 100)) : 0;
     const fakty = [
