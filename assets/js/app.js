@@ -21,6 +21,10 @@
   const ONLINE_DNI = CFG.ONLINE_UZAVIERKA_DNI || 5; // online vzorky treba objednať aspoň toľko dní vopred
   const DOPRAVA = Number(CFG.ONLINE_DOPRAVA) || 0; // Packeta, € za balíček
   const DOPRAVA_TEXT = DOPRAVA ? `+ ${DOPRAVA} € doprava (Packeta)` : '';
+  // Platba kartou (Stripe) – backend ju zapne, keď má kľúč; web sa to dozvie z odpovede ?a=akcie / ?a=info
+  let PLATBY = false;
+  const cisloCeny = c => { const m = String(c ?? '').replace(/\s/g, '').match(/\d+(?:[.,]\d+)?/); return m ? Number(m[0].replace(',', '.')) : 0; };
+  const eur = n => `${(Math.round(n * 100) / 100).toFixed(2).replace('.', ',').replace(',00', '')} €`;
 
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
@@ -66,7 +70,7 @@
       // data/akcie-doplnky.json: popis, podnadpis či obrázok k akcii podľa id, má prednosť pred tabuľkou
       const doplnky = getJSON('data/akcie-doplnky.json').then(d => d.akcie || {}).catch(() => ({}));
       akcieCache = Promise.all([getJSON(DEMO ? 'data/akcie.json' : API + '?a=akcie'), doplnky])
-        .then(([d, dopl]) => (d.akcie || []).map(a => pripravAkciu({ ...a, ...dopl[a.id] })).filter(Boolean).sort((a, b) => a.start - b.start));
+        .then(([d, dopl]) => (PLATBY = !!d.platby, d.akcie || []).map(a => pripravAkciu({ ...a, ...dopl[a.id] })).filter(Boolean).sort((a, b) => a.start - b.start));
     }
     return akcieCache;
   }
@@ -228,6 +232,12 @@
       </div>` : '';
     const moznosti = Array.from({ length: max }, (_, i) => `<option value="${i + 1}">${osob(i + 1)}</option>`).join('');
     const alko = ALKO.includes(a.typ);
+    const karta = PLATBY && !DEMO && cisloCeny(a.cena) > 0;
+    const platba = karta ? `<fieldset class="ucast platba-volba">
+        <legend>Platba</legend>
+        <label class="opt"><input type="radio" name="platba" value="karta" checked><span><strong>Kartou teraz <b class="suma"></b></strong>kartou, Apple Pay alebo Google Pay cez zabezpečenú bránu Stripe</span></label>
+        <label class="opt"><input type="radio" name="platba" value="neskor"><span class="neskor"><strong>Na mieste</strong>v hotovosti, kartou alebo voucherom</span></label>
+      </fieldset>` : '';
     return `<form class="book" novalidate>
       <h3>Rezervovať miesto</h3>
       ${ucast}
@@ -241,11 +251,12 @@
         <label class="fld"><span>Telefón</span><input type="tel" name="telefon" autocomplete="tel" maxlength="30" placeholder="09xx xxx xxx" required></label>
       </div>
       <label class="fld"><span>Poznámka <em>(nepovinné)</em></span><textarea name="poznamka" rows="2" maxlength="500"></textarea></label>
+      ${platba}
       ${alko ? '<label class="chk"><input type="checkbox" name="vek"> <span>Všetci, pre ktorých rezervujem, majú viac ako 18 rokov.</span></label>' : ''}
       <label class="chk"><input type="checkbox" name="suhlas"> <span>Beriem na vedomie <a href="ochrana-udajov.html" target="_blank">informácie o spracovaní osobných údajov</a>.</span></label>
       <p class="form-msg" role="alert"></p>
       <button class="btn" type="submit">Rezervovať</button>
-      <p class="fine">${a.online ? 'V bare sa platí na mieste, pri online degustácii vám platobné údaje pošleme e-mailom.' : 'Platí sa na mieste.'} ${MAILOM ? 'Rezerváciu vám potvrdíme e-mailom alebo telefonicky.' : DEMO ? '' : 'Potvrdenie vám príde e-mailom.'}</p>
+      <p class="fine">${karta ? 'Pri platbe kartou vás presmerujeme na zabezpečenú bránu Stripe a miesto vám medzitým podržíme. Platbou súhlasíte s <a href="podmienky.html" target="_blank">obchodnými podmienkami</a>.' : a.online ? 'V bare sa platí na mieste, pri online degustácii vám platobné údaje pošleme e-mailom.' : 'Platí sa na mieste.'} ${MAILOM ? 'Rezerváciu vám potvrdíme e-mailom alebo telefonicky.' : DEMO ? '' : 'Potvrdenie vám príde e-mailom.'}</p>
     </form>`;
   }
 
@@ -258,7 +269,7 @@
     const data = {
       akcia_id: a.id, meno: txt('meno'), email: txt('email'), telefon: txt('telefon'),
       pocet: parseInt(fd.get('pocet'), 10) || 1, poznamka: txt('poznamka'), suhlas: !!fd.get('suhlas'), web: txt('web'),
-      ucast: String(fd.get('ucast') || 'bar'), adresa: txt('adresa')
+      ucast: String(fd.get('ucast') || 'bar'), adresa: txt('adresa'), platba: fd.get('platba') === 'karta' ? 'karta' : 'neskor'
     };
 
     $$('.bad', f).forEach(x => x.classList.remove('bad'));
@@ -282,6 +293,11 @@
     try {
       const res = await rezervuj(data, a);
       if (!res || !res.ok) throw new Error((res && res.chyba) || 'Rezerváciu sa nepodarilo uložiť.');
+      if (res.platba) {
+        btn.textContent = 'Presmerúvam na platbu…';
+        window.location.href = res.platba;
+        return;
+      }
       if (typeof res.volne === 'number') a.volne = res.volne;
       const box = document.createElement('div');
       box.className = 'ok-box';
@@ -307,7 +323,7 @@
         ? `Nepodarilo sa spojiť so serverom. Skúste to znova alebo zavolajte na ${TEL}.`
         : err.message;
       btn.disabled = false;
-      btn.textContent = 'Rezervovať';
+      if (f._suma) f._suma(); else btn.textContent = 'Rezervovať';
     }
   }
 
@@ -315,6 +331,22 @@
     const m = otvorModal(detailAkcie(a), 'm-akcia', `Detail akcie ${a.nazov}`);
     const f = $('form.book', m);
     if (f) f.addEventListener('submit', e => odoslat(e, a, f));
+    if (f && f.elements.platba) {
+      // suma na tlačidle a texty podľa spôsobu platby
+      f._suma = () => {
+        const online = f.elements.ucast && f.elements.ucast.value === 'online';
+        const pocet = parseInt(f.elements.pocet.value, 10) || 1;
+        const suma = (cisloCeny(a.cena) + (online ? DOPRAVA : 0)) * pocet;
+        const kartou = f.elements.platba.value === 'karta';
+        $('.suma', f).textContent = '· ' + eur(suma);
+        $('.neskor', f).innerHTML = online
+          ? '<strong>Prevodom</strong>platobné údaje vám pošleme e-mailom'
+          : '<strong>Na mieste</strong>v hotovosti, kartou alebo voucherom';
+        $('button[type=submit]', f).textContent = kartou ? `Zaplatiť ${eur(suma)}` : online ? 'Objednať vzorky' : 'Rezervovať';
+      };
+      f.addEventListener('change', () => f._suma());
+      f._suma();
+    }
     if (f && a.online) {
       // prepínač V bare / Online: adresa, názov poľa a počet možností
       const prepni = () => {
@@ -327,6 +359,7 @@
         sel.innerHTML = Array.from({ length: max }, (_, i) =>
           `<option value="${i + 1}">${online ? `${i + 1} ${sklon(i + 1, 'balíček', 'balíčky', 'balíčkov')}` : osob(i + 1)}</option>`).join('');
         sel.value = String(Math.min(bolo, max));
+        if (f._suma) f._suma();
       };
       f.addEventListener('change', e => { if (e.target.name === 'ucast') prepni(); });
       prepni();
@@ -476,6 +509,219 @@
       btn.disabled = false;
       btn.textContent = 'Odoslať dopyt';
     }
+  }
+
+  /* ---------- Degustácia u vás ---------- */
+  const OS = Object.assign({
+    CENA_VLASTNE_FLASE: 169, CENA_OSOBA: 29, VZORKY: 7, ML: 25, ZADARMO_KM: 30, CENA_KM: 0.4,
+    LEN_NAD_LIMIT: false, TAM_A_SPAT: false, MIN_OSOB: 1, MAX_OSOB: 80, MIN_DNI_VOPRED: 2
+  }, CFG.OSLAVA || {});
+
+  // rovnaký výpočet ako cenaOslavy_ v Code.gs (záväzná je cena zo servera)
+  function cenaOslavy(variant, pocet, km) {
+    const zaklad = variant === 'vlastne' ? OS.CENA_VLASTNE_FLASE : OS.CENA_OSOBA * pocet;
+    const kmPlatene = km == null || km <= OS.ZADARMO_KM ? 0 : (OS.LEN_NAD_LIMIT ? km - OS.ZADARMO_KM : km) * (OS.TAM_A_SPAT ? 2 : 1);
+    const doprava = Math.round(kmPlatene * OS.CENA_KM * 100) / 100;
+    return { zaklad, kmPlatene, doprava, spolu: zaklad + doprava };
+  }
+
+  const kmCache = {};
+  async function zistiKm(adresa) {
+    const k = adresa.toLowerCase();
+    if (!kmCache[k]) {
+      kmCache[k] = getJSON(API + '?a=vzdialenost&adresa=' + encodeURIComponent(adresa))
+        .catch(err => { delete kmCache[k]; throw err; });
+    }
+    return kmCache[k];
+  }
+
+  async function initOslava() {
+    const f = $('#oslava-form');
+    if (!f) return;
+    const sumar = $('#oslava-sumar');
+    const msg = $('.form-msg', f);
+    const btn = $('button[type=submit]', f);
+    const platbaBox = $('.platba-volba', f);
+    const najskor = new Date(Date.now() + OS.MIN_DNI_VOPRED * 864e5);
+    f.elements.datum.min = `${najskor.getFullYear()}-${String(najskor.getMonth() + 1).padStart(2, '0')}-${String(najskor.getDate()).padStart(2, '0')}`;
+    f.elements.pocet.min = OS.MIN_OSOB;
+    f.elements.pocet.max = OS.MAX_OSOB;
+
+    let km = null;
+    let kmStav = 'prazdne'; // prazdne | pocitam | ok | chyba
+    let kmPre = '';
+
+    if (new URLSearchParams(location.search).get('platba') === 'zrusena') {
+      msg.textContent = 'Platbu ste zrušili, nič sme nestrhli. Objednávku môžete odoslať znova.';
+      history.replaceState(null, '', location.pathname + location.hash);
+    }
+
+    const prepocitaj = () => {
+      const variant = f.elements.variant.value;
+      const pocet = Math.max(0, parseInt(f.elements.pocet.value, 10) || 0);
+      const kartou = !platbaBox.hidden && f.elements.platba.value === 'karta';
+      $('.destilat', f).hidden = variant !== 'nase';
+      $('.podm-chk', f).hidden = !kartou;
+      const c = cenaOslavy(variant, pocet, km);
+      const dopravaText = kmStav === 'pocitam' ? 'počítam…'
+        : kmStav === 'ok' ? (c.doprava ? `${eur(c.doprava)} <small>${km} km</small>` : `zadarmo <small>${km} km</small>`)
+        : kmStav === 'chyba' ? 'dopočítame' : 'podľa adresy';
+      sumar.innerHTML = `
+        <p class="eyebrow">Vaša degustácia</p>
+        <dl class="sum-list">
+          <div><dt>${variant === 'vlastne' ? 'Degustácia s vašimi fľašami' : `${pocet || '–'} × ${eur(OS.CENA_OSOBA)} <small>${OS.VZORKY} vzoriek po ${OS.ML} ml</small>`}</dt><dd>${eur(c.zaklad)}</dd></div>
+          <div><dt>Doprava</dt><dd>${dopravaText}</dd></div>
+        </dl>
+        <p class="sum-total"><span>Spolu</span><strong>${eur(c.spolu)}</strong></p>
+        <p class="fine">${kmStav === 'ok' ? '' : `Do ${OS.ZADARMO_KM} km od Trenčína je doprava zadarmo, ďalej ${eur(OS.CENA_KM)} za km. `}Trvanie 1,5 – 2 hodiny podľa dohody.</p>`;
+      btn.textContent = kartou ? `Zaplatiť ${eur(c.spolu)}` : 'Odoslať objednávku';
+    };
+
+    const overAdresu = async () => {
+      const adresa = f.elements.adresa.value.trim();
+      if (adresa === kmPre) return;
+      kmPre = adresa;
+      if (adresa.length < 3 || DEMO) { km = null; kmStav = 'prazdne'; $('.km-msg', f).textContent = ''; prepocitaj(); return; }
+      kmStav = 'pocitam';
+      prepocitaj();
+      try {
+        const d = await zistiKm(adresa);
+        if (kmPre !== adresa) return;
+        if (typeof d.km !== 'number') throw new Error('');
+        km = d.km;
+        kmStav = 'ok';
+      } catch (err) {
+        if (kmPre !== adresa) return;
+        km = null;
+        kmStav = 'chyba';
+        $('.km-msg', f).textContent = err.message && !/HTTP|fetch/i.test(err.message) ? err.message : 'Vzdialenosť sa nepodarilo vypočítať, dopočítame ju pri potvrdení.';
+      }
+      if (kmStav === 'ok') $('.km-msg', f).textContent = `Vzdialenosť z Trenčína autom: ${km} km.`;
+      prepocitaj();
+    };
+
+    let casovac;
+    f.addEventListener('input', e => {
+      if (e.target.name === 'adresa') { clearTimeout(casovac); casovac = setTimeout(overAdresu, 900); }
+      else prepocitaj();
+    });
+    f.addEventListener('change', e => { if (e.target.name === 'adresa') overAdresu(); else prepocitaj(); });
+
+    // predvolba variantu z tlačidiel v cenníku
+    document.addEventListener('click', e => {
+      const t = e.target.closest('[data-variant]');
+      if (!t) return;
+      const r = f.querySelector(`input[name=variant][value="${t.dataset.variant}"]`);
+      if (r) { r.checked = true; prepocitaj(); }
+    });
+
+    // platba kartou len keď ju backend má zapnutú
+    platbaBox.hidden = true;
+    prepocitaj();
+    if (!DEMO) {
+      getJSON(API + '?a=info').then(d => { PLATBY = !!d.platby; platbaBox.hidden = !PLATBY; prepocitaj(); }).catch(() => {});
+    }
+
+    f.addEventListener('submit', async e => {
+      e.preventDefault();
+      const fd = new FormData(f);
+      const txt = k => String(fd.get(k) || '').trim();
+      const kartou = !platbaBox.hidden && fd.get('platba') === 'karta';
+      const d = {
+        variant: txt('variant') === 'vlastne' ? 'vlastne' : 'nase', pocet: parseInt(fd.get('pocet'), 10) || 0,
+        destilat: txt('variant') === 'nase' ? txt('destilat') : '', datum: txt('datum'), cas: txt('cas'), adresa: txt('adresa'),
+        meno: txt('meno'), email: txt('email'), telefon: txt('telefon'), poznamka: txt('poznamka'),
+        vek: !!fd.get('vek'), suhlas: !!fd.get('suhlas'), podmienky: !!fd.get('podmienky'), platba: kartou ? 'karta' : 'neskor', web: txt('web')
+      };
+      $$('.bad', f).forEach(x => x.classList.remove('bad'));
+      const chyby = [];
+      const zle = (meno, text) => { f.elements[meno] && f.elements[meno].classList.add('bad'); chyby.push(text); };
+      const den = new Date(d.datum + 'T12:00');
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(d.datum) || isNaN(den) || d.datum < f.elements.datum.min) zle('datum', `Vyberte termín najskôr o ${OS.MIN_DNI_VOPRED} dni.`);
+      if (!/^\d{1,2}:\d{2}$/.test(d.cas)) zle('cas', 'Zadajte čas začiatku.');
+      if (!(d.pocet >= OS.MIN_OSOB && d.pocet <= OS.MAX_OSOB)) zle('pocet', `Počet osôb môže byť ${OS.MIN_OSOB} až ${OS.MAX_OSOB}.`);
+      if (d.adresa.length < 5) zle('adresa', 'Doplňte adresu, kde sa degustácia uskutoční.');
+      if (d.meno.length < 2) zle('meno', 'Vyplňte meno.');
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(d.email)) zle('email', 'Skontrolujte e-mail.');
+      if (d.telefon.replace(/\D/g, '').length < 9) zle('telefon', 'Skontrolujte telefónne číslo.');
+      if (!d.vek) zle('vek', 'Degustácia je len pre osoby staršie ako 18 rokov.');
+      if (!d.suhlas) zle('suhlas', 'Potvrďte, prosím, informácie o spracovaní údajov.');
+      if (kartou && !d.podmienky) zle('podmienky', 'Pri platbe kartou potvrďte obchodné podmienky.');
+      if (chyby.length) {
+        msg.textContent = chyby[0];
+        $('.bad', f).focus();
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = kartou ? 'Pripravujem platbu…' : 'Odosielam…';
+      msg.textContent = '';
+      try {
+        let res;
+        if (DEMO) { await pauza(700); res = { ok: true }; }
+        else res = await (await fetch(API, { method: 'POST', body: JSON.stringify({ a: 'oslava', ...d }) })).json();
+        if (!res || !res.ok) throw new Error((res && res.chyba) || 'Objednávku sa nepodarilo odoslať.');
+        if (res.platba) {
+          btn.textContent = 'Presmerúvam na platbu…';
+          window.location.href = res.platba;
+          return;
+        }
+        const box = document.createElement('div');
+        box.className = 'ok-box ok-page';
+        box.tabIndex = -1;
+        box.innerHTML = `<h3>Objednávka prijatá</h3>
+          <p>Ďakujeme, ${esc(d.meno.split(/\s+/)[0])}! Máme vašu objednávku na ${esc(fDatum(d.datum + 'T12:00'))} o ${esc(d.cas)}${res.suma ? `, spolu <strong>${esc(eur(res.suma))}</strong>${res.km == null ? ' + doprava' : ''}` : ''}.</p>
+          <p>${DEMO ? '<em>Ukážkový režim – nič sa neodoslalo.</em>' : `Rekapituláciu sme poslali na <strong>${esc(d.email)}</strong>.`} Termín vám čo najskôr potvrdíme a dohodneme podrobnosti aj platbu. Ak sa ponáhľate, zavolajte na <a href="${TEL_HREF}">${esc(TEL)}</a>.</p>`;
+        f.replaceWith(box);
+        box.focus();
+      } catch (err) {
+        msg.textContent = /fetch|network/i.test(err.message)
+          ? `Nepodarilo sa spojiť so serverom. Skúste to znova alebo zavolajte na ${TEL}.`
+          : err.message;
+        btn.disabled = false;
+        prepocitaj();
+      }
+    });
+  }
+
+  async function initPlatba() {
+    const box = $('#platba-vysledok');
+    const sid = new URLSearchParams(location.search).get('sid') || '';
+    const kontakt = `zavolajte na <a href="${TEL_HREF}">${esc(TEL)}</a> alebo napíšte na <a href="mailto:${esc(CFG.EMAIL || '')}">${esc(CFG.EMAIL || '')}</a>`;
+    if (!sid || DEMO) {
+      box.innerHTML = `<h2>Platbu sme nenašli</h2><p>V odkaze chýba číslo platby. Ak ste platili, ${kontakt}.</p>`;
+      return;
+    }
+    for (let pokus = 0; pokus < 6; pokus++) {
+      try {
+        const d = await getJSON(API + '?a=platba&sid=' + encodeURIComponent(sid));
+        if (d.zaplatene) {
+          const oslava = d.druh === 'oslava';
+          box.className = 'pay-box ok';
+          box.innerHTML = `<p class="eyebrow">Zaplatené · ${esc(d.obj || '')}</p>
+            <h2>Ďakujeme${d.meno ? ', ' + esc(d.meno) : ''}!</h2>
+            <p class="pay-sum">${esc(eur(d.suma))}</p>
+            <p>${esc(d.popis || '')}</p>
+            <p>${oslava
+              ? 'Termín vám čo najskôr potvrdíme telefonicky alebo e-mailom a dohodneme podrobnosti. Ak by sme v tomto termíne nemohli prísť, celú sumu vám vrátime.'
+              : 'Miesto je vaše, tešíme sa na vás.'}</p>
+            <p>Potvrdenie sme poslali na <strong>${esc(d.email)}</strong>. Doklad o platbe vám pošle aj Stripe.</p>
+            <a class="btn" href="${oslava ? 'index.html' : 'akcie.html'}">${oslava ? 'Späť na úvod' : 'Ďalšie akcie'}</a>`;
+          return;
+        }
+        if (d.stav === 'expired') {
+          box.innerHTML = `<h2>Platba vypršala</h2><p>Nič sme nestrhli. Objednávku môžete zopakovať, alebo ${kontakt}.</p>`;
+          return;
+        }
+      } catch (err) {
+        console.error(err);
+        if (pokus === 5) {
+          box.innerHTML = `<h2>Platbu overujeme</h2><p>Stav platby sa nepodarilo načítať. Ak platba prebehla, potvrdenie vám príde e-mailom do 15 minút. Inak ${kontakt}.</p>`;
+          return;
+        }
+      }
+      await pauza(2500);
+    }
+    box.innerHTML = `<h2>Platbu ešte spracúvame</h2><p>Potvrdenie vám príde e-mailom do 15 minút. Ak nepríde, ${kontakt}.</p>`;
   }
 
   /* ---------- Modálne okno ---------- */
@@ -762,6 +1008,8 @@
   if (stranka === 'index') { initHomeAkcie(); initHomeNovinky(); }
   if (stranka === 'akcie') initAkcie();
   if (stranka === 'novinky') initNovinky();
+  if (stranka === 'degustacia-u-vas') initOslava();
+  if (stranka === 'platba') initPlatba();
 
   if (DEMO && !MAILOM) {
     const b = document.createElement('div');

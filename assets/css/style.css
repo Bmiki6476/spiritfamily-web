@@ -453,3 +453,91 @@ body.modal-open { overflow: hidden; }
 @media (max-width: 900px) {
   .online-grid { grid-template-columns: 1fr; gap: 32px; }
 }
+
+/* ============ Degustácia u vás ============ */
+.hero-oslava { min-height: 94svh; }
+.hero-bg video { width: 100%; height: 100%; object-fit: cover; filter: saturate(.9); }
+.hero-oslava::before {
+  background:
+    radial-gradient(ellipse 75% 65% at 12% 88%, rgba(13, 10, 7, .9), transparent 72%),
+    linear-gradient(180deg, rgba(13, 10, 7, .72) 0%, rgba(13, 10, 7, .38) 38%, rgba(13, 10, 7, .88) 80%, var(--bg) 100%);
+}
+.hero-facts { display: flex; flex-wrap: wrap; gap: 14px 34px; list-style: none; margin: 40px 0 0; padding: 22px 0 0; border-top: 1px solid var(--line2); max-width: 640px; }
+.hero-facts li { display: flex; flex-direction: column; font: 500 13px var(--f-cond); letter-spacing: .18em; text-transform: uppercase; color: var(--muted); }
+.hero-facts strong { font: 400 34px/1.05 var(--f-display); letter-spacing: .01em; color: var(--gold2); }
+
+.tick { list-style: none; margin: 4px 0 22px; padding: 0; }
+.tick li { position: relative; padding: 6px 0 6px 28px; color: #e2d8c8; }
+.tick li::before { content: ''; position: absolute; left: 2px; top: 13px; width: 12px; height: 7px; border-left: 2px solid var(--gold); border-bottom: 2px solid var(--gold); transform: rotate(-45deg); }
+.priv-card-hl { border-color: var(--gold); background: linear-gradient(160deg, rgba(217, 183, 122, .12), var(--card) 55%); }
+
+.doprava { display: flex; align-items: center; gap: 20px; margin-top: 20px; padding: 20px 26px; border-radius: var(--radius); border: 1px dashed var(--line2); }
+.doprava svg { flex: none; width: 44px; height: 44px; color: var(--gold); }
+.doprava p { margin: 0; color: var(--muted); }
+.doprava strong { color: #fff; }
+
+.order-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 28px; align-items: start; }
+.book-page { margin: 0; padding: 30px; border: 1px solid var(--line2); border-radius: var(--radius); background: var(--card); }
+.km-msg { min-height: 1.3em; margin: -6px 0 12px; font-size: 14px; color: var(--gold); }
+.km-msg:empty { min-height: 0; margin: 0; }
+.order-sum { position: sticky; top: 96px; padding: 28px; border-radius: var(--radius); border: 1px solid var(--gold); background: linear-gradient(170deg, rgba(217, 183, 122, .12), var(--bg2) 60%); }
+.sum-list { margin: 0; }
+.sum-list div { display: flex; justify-content: space-between; align-items: baseline; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.sum-list dt { color: #e2d8c8; }
+.sum-list dd { margin: 0; font: 600 19px var(--f-cond); color: #fff; white-space: nowrap; text-align: right; }
+.sum-list small { display: block; font: 400 13px var(--f-body); color: var(--dim); }
+.sum-total { display: flex; justify-content: space-between; align-items: baseline; margin: 18px 0 6px; }
+.sum-total span { font: 600 14px var(--f-cond); letter-spacing: .24em; text-transform: uppercase; color: var(--muted); }
+.sum-total strong { font: 400 56px/1 var(--f-display); color: var(--gold2); }
+.ok-page { margin: 0; }
+.opt b.suma { color: var(--gold2); font-weight: 600; }
+
+.faq-grid { display: grid; grid-template-columns: 1fr 1.3fr; gap: clamp(30px, 5vw, 70px); align-items: start; }
+.faq-img { margin-top: 30px; width: 100%; aspect-ratio: 16 / 10; object-fit: cover; border-radius: var(--radius); border: 1px solid var(--line); }
+.faq details { border-bottom: 1px solid var(--line); }
+.faq details:first-child { border-top: 1px solid var(--line); }
+.faq summary { position: relative; padding: 20px 40px 20px 0; cursor: pointer; list-style: none; font: 600 20px var(--f-cond); letter-spacing: .04em; color: #fff; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: '+'; position: absolute; right: 6px; top: 14px; font: 400 30px/1 var(--f-body); color: var(--gold); transition: transform .25s; }
+.faq details[open] summary::after { transform: rotate(45deg); }
+.faq details p { margin: 0 0 20px; color: var(--muted); }
+
+.priv-wide { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); margin-top: 20px; overflow: hidden; border-radius: var(--radius); border: 1px solid var(--gold); background: var(--card); color: var(--text); transition: transform .25s, box-shadow .25s; }
+.priv-wide:hover { color: var(--text); transform: translateY(-2px); box-shadow: 0 24px 50px -28px #000; }
+.priv-wide img { width: 100%; height: 100%; min-height: 220px; object-fit: cover; }
+.priv-wide > span { display: flex; flex-direction: column; justify-content: center; gap: 10px; padding: 28px 32px; }
+.priv-wide .eyebrow { margin: 0; }
+.priv-wide strong { font: 400 clamp(30px, 4vw, 42px)/1 var(--f-display); color: #fff; }
+.priv-wide > span > span:not(.eyebrow):not(.link-arrow) { color: var(--muted); }
+.priv-wide .link-arrow { color: var(--gold); }
+
+.pay-box { max-width: 680px; margin: 0 auto; padding: 34px; border-radius: var(--radius); border: 1px solid var(--line2); background: var(--card); }
+.pay-box h2 { font: 400 clamp(40px, 6vw, 60px)/1 var(--f-display); color: #fff; margin-bottom: 14px; }
+.pay-box.ok { border-color: color-mix(in srgb, var(--ok) 50%, transparent); }
+.pay-box.ok h2 { color: var(--ok); }
+.pay-box .pay-sum { font: 400 64px/1 var(--f-display); color: var(--gold2); margin: 0 0 10px; }
+.pay-box p { color: #ddd3c3; }
+.pay-box .btn { margin-top: 10px; }
+
+@media (max-width: 1180px) {
+  .nav { gap: 20px; }
+  .nav a:not(.btn) { font-size: 14px; letter-spacing: .09em; }
+}
+@media (max-width: 900px) {
+  .order-grid, .faq-grid, .priv-wide { grid-template-columns: 1fr; }
+  .order-sum { position: static; order: -1; }
+  .priv-wide img { min-height: 0; aspect-ratio: 16 / 8; }
+}
+@media (max-width: 600px) {
+  .book-page { padding: 22px 18px; }
+  .order-sum { padding: 22px; }
+  .hero-facts { gap: 12px 22px; margin-top: 30px; }
+  .hero-facts strong { font-size: 28px; }
+  .doprava { align-items: flex-start; padding: 18px; }
+  .priv-wide > span { padding: 22px; }
+  .pay-box { padding: 24px 20px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-bg video { display: none; }
+  .hero-oslava .hero-bg { background: url(../../img/degustacia-u-vas.jpg) center / cover; }
+}

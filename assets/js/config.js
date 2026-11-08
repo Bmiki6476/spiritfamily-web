@@ -23,5 +23,20 @@ window.SF_CONFIG = {
   ONLINE_DOPRAVA: 3,
 
   // Súkromná degustácia (sekcia Súkromné akcie)
-  SUKROMNA_CENA: '120 € pre 4 osoby'
+  SUKROMNA_CENA: '120 € pre 4 osoby',
+
+  // Degustácia u vás (degustacia-u-vas.html) – len na zobrazenie, platná cena sa ráta v Code.gs (NASTAVENIA.OSLAVA), musí sedieť
+  OSLAVA: {
+    CENA_VLASTNE_FLASE: 169,
+    CENA_OSOBA: 29,
+    VZORKY: 7,
+    ML: 25,
+    ZADARMO_KM: 30,
+    CENA_KM: 0.4,
+    LEN_NAD_LIMIT: false,
+    TAM_A_SPAT: false,
+    MIN_OSOB: 1,
+    MAX_OSOB: 80,
+    MIN_DNI_VOPRED: 2
+  }
 };
