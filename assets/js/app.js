@@ -232,12 +232,17 @@
       </div>` : '';
     const moznosti = Array.from({ length: max }, (_, i) => `<option value="${i + 1}">${osob(i + 1)}</option>`).join('');
     const alko = ALKO.includes(a.typ);
-    const karta = PLATBY && !DEMO && cisloCeny(a.cena) > 0;
-    const platba = karta ? `<fieldset class="ucast platba-volba">
+    const platene = !DEMO && cisloCeny(a.cena) > 0;
+    const karta = PLATBY && platene;
+    const platba = platene ? `<fieldset class="ucast platba-volba">
         <legend>Platba</legend>
-        <label class="opt"><input type="radio" name="platba" value="karta" checked><span><strong>Kartou teraz <b class="suma"></b></strong>kartou, Apple Pay alebo Google Pay cez zabezpečenú bránu Stripe</span></label>
-        <label class="opt"><input type="radio" name="platba" value="neskor"><span class="neskor"><strong>Na mieste</strong>v hotovosti, kartou alebo voucherom</span></label>
-      </fieldset>` : '';
+        ${karta ? '<label class="opt"><input type="radio" name="platba" value="karta" checked><span><strong>Kartou teraz <b class="suma"></b></strong>kartou, Apple Pay alebo Google Pay cez zabezpečenú bránu Stripe</span></label>' : ''}
+        <label class="opt"><input type="radio" name="platba" value="neskor"${karta ? '' : ' checked'}><span class="neskor"><strong>Len rezervovať, zaplatím na mieste</strong>v hotovosti alebo kartou v bare</span></label>
+        <label class="opt opt-voucher"><input type="radio" name="platba" value="voucher"><span><strong>Mám voucher zo Zľavomatu</strong>len rezervácia, nič neplatíte – voucher ukážete pri vstupe</span></label>
+      </fieldset>
+      <div class="voucher-box" hidden>
+        <label class="fld"><span>Kód voucheru <em>(nepovinné, ak ho máte po ruke)</em></span><input name="voucher" maxlength="40" autocomplete="off" placeholder="napr. ZM-1234-5678"></label>
+      </div>` : '';
     return `<form class="book" novalidate>
       <h3>Rezervovať miesto</h3>
       ${ucast}
@@ -256,7 +261,7 @@
       <label class="chk"><input type="checkbox" name="suhlas"> <span>Beriem na vedomie <a href="ochrana-udajov.html" target="_blank">informácie o spracovaní osobných údajov</a>.</span></label>
       <p class="form-msg" role="alert"></p>
       <button class="btn" type="submit">Rezervovať</button>
-      <p class="fine">${karta ? 'Pri platbe kartou vás presmerujeme na zabezpečenú bránu Stripe a miesto vám medzitým podržíme. Platbou súhlasíte s <a href="podmienky.html" target="_blank">obchodnými podmienkami</a>.' : a.online ? 'V bare sa platí na mieste, pri online degustácii vám platobné údaje pošleme e-mailom.' : 'Platí sa na mieste.'} ${MAILOM ? 'Rezerváciu vám potvrdíme e-mailom alebo telefonicky.' : DEMO ? '' : 'Potvrdenie vám príde e-mailom.'}</p>
+      <p class="fine">${karta ? 'Pri platbe kartou vás presmerujeme na zabezpečenú bránu Stripe a miesto vám medzitým podržíme. Platbou súhlasíte s <a href="podmienky.html" target="_blank">obchodnými podmienkami</a>.' : a.online ? 'V bare sa platí na mieste, pri online degustácii vám platobné údaje pošleme e-mailom.' : 'Platí sa na mieste.'}${platene ? ' Voucher zo Zľavomatu platí len na degustáciu v bare.' : ''} ${MAILOM ? 'Rezerváciu vám potvrdíme e-mailom alebo telefonicky.' : DEMO ? '' : 'Potvrdenie vám príde e-mailom.'}</p>
     </form>`;
   }
 
@@ -269,8 +274,11 @@
     const data = {
       akcia_id: a.id, meno: txt('meno'), email: txt('email'), telefon: txt('telefon'),
       pocet: parseInt(fd.get('pocet'), 10) || 1, poznamka: txt('poznamka'), suhlas: !!fd.get('suhlas'), web: txt('web'),
-      ucast: String(fd.get('ucast') || 'bar'), adresa: txt('adresa'), platba: fd.get('platba') === 'karta' ? 'karta' : 'neskor'
+      ucast: String(fd.get('ucast') || 'bar'), adresa: txt('adresa'),
+      platba: ['karta', 'voucher'].includes(fd.get('platba')) ? fd.get('platba') : 'neskor', voucher: txt('voucher')
     };
+    if (data.ucast === 'online' && data.platba === 'voucher') data.platba = 'neskor';
+    if (data.platba !== 'voucher') data.voucher = '';
 
     $$('.bad', f).forEach(x => x.classList.remove('bad'));
     const chyby = [];
@@ -312,6 +320,7 @@
         : `<h3>${online ? 'Objednávka prijatá' : 'Miesto je vaše'}</h3>
         <p>Ďakujeme, ${esc(data.meno.split(/\s+/)[0])}! Zapísali sme ${online ? `objednávku vzoriek (${balicky})` : `miesto pre <strong>${osob(data.pocet)}</strong>`} na ${kedyText}.</p>
         ${online ? '<p>Platobné údaje a informácie k doručeniu vzoriek vám pošleme e-mailom. Odkaz na prenos pošleme pred degustáciou a záznam vám zostane.</p>' : ''}
+        ${data.platba === 'voucher' ? '<p>Voucher zo Zľavomatu si pripravte pri vstupe – vytlačený alebo v mobile.</p>' : ''}
         <p>${DEMO ? '<em>Ukážkový režim – nič sa neuložilo.</em>' : `Potvrdenie sme poslali na <strong>${esc(data.email)}</strong>.`} Ak niečo potrebujete zmeniť, zavolajte na <a href="${TEL_HREF}">${esc(TEL)}</a>.</p>`;
       f.replaceWith(box);
       box.focus();
@@ -337,11 +346,16 @@
         const online = f.elements.ucast && f.elements.ucast.value === 'online';
         const pocet = parseInt(f.elements.pocet.value, 10) || 1;
         const suma = (cisloCeny(a.cena) + (online ? DOPRAVA : 0)) * pocet;
-        const kartou = f.elements.platba.value === 'karta';
-        $('.suma', f).textContent = '· ' + eur(suma);
+        const vOpt = $('.opt-voucher', f);
+        vOpt.hidden = online;
+        if (online && f.elements.platba.value === 'voucher') $('input[value=neskor]', f).checked = true;
+        const sposob = f.elements.platba.value;
+        const kartou = sposob === 'karta';
+        if ($('.suma', f)) $('.suma', f).textContent = '· ' + eur(suma);
         $('.neskor', f).innerHTML = online
           ? '<strong>Prevodom</strong>platobné údaje vám pošleme e-mailom'
-          : '<strong>Na mieste</strong>v hotovosti, kartou alebo voucherom';
+          : '<strong>Len rezervovať, zaplatím na mieste</strong>v hotovosti alebo kartou v bare';
+        $('.voucher-box', f).hidden = sposob !== 'voucher';
         $('button[type=submit]', f).textContent = kartou ? `Zaplatiť ${eur(suma)}` : online ? 'Objednať vzorky' : 'Rezervovať';
       };
       f.addEventListener('change', () => f._suma());
