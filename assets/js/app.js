@@ -384,7 +384,7 @@
   /* ---------- Súkromné akcie (dopyt) ---------- */
   const DRUHY = {
     degustacia: { nazov: 'Súkromná degustácia', kratko: 'Degustácia', popis: CFG.SUKROMNA_CENA || '', typ: 'whisky' },
-    podujatie: { nazov: 'Firemná akcia / oslava', kratko: 'Firemná akcia, oslava', popis: 'priestor zadarmo, platíte len konzumáciu', typ: 'ine' }
+    podujatie: { nazov: 'Teambuilding / firemná akcia', kratko: 'Teambuilding, firemná akcia, oslava', popis: 'priestor zadarmo, platíte len konzumáciu', typ: 'ine' }
   };
 
   const STYLY = ['Bez degustácie', 'Whisky', 'Rum', 'Cesta okolo sveta alkoholu', 'Ešte neviem'];
