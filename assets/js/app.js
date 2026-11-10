@@ -384,8 +384,11 @@
   /* ---------- Súkromné akcie (dopyt) ---------- */
   const DRUHY = {
     degustacia: { nazov: 'Súkromná degustácia', kratko: 'Degustácia', popis: CFG.SUKROMNA_CENA || '', typ: 'whisky' },
-    podujatie: { nazov: 'Prenájom baru', kratko: 'Prenájom baru', popis: 'oslava, večierok, stretnutie', typ: 'ine' }
+    podujatie: { nazov: 'Firemná akcia / oslava', kratko: 'Firemná akcia, oslava', popis: 'priestor zadarmo, platíte len konzumáciu', typ: 'ine' }
   };
+
+  const STYLY = ['Bez degustácie', 'Whisky', 'Rum', 'Cesta okolo sveta alkoholu', 'Ešte neviem'];
+  const JEDLO = ['Prinesieme si vlastné', 'Vybavte nám catering', 'Ešte neviem', 'Bez jedla'];
 
   function formularDopyt(druh) {
     const zajtra = new Date(Date.now() + 864e5);
@@ -396,7 +399,11 @@
         ${Object.entries(DRUHY).map(([k, d]) => `<label class="opt"><input type="radio" name="druh" value="${k}"${k === druh ? ' checked' : ''}><span><strong>${d.kratko}</strong>${esc(d.popis)}</span></label>`).join('')}
       </fieldset>
       <div class="hp" aria-hidden="true"><label>Nevypĺňajte <input name="web" tabindex="-1" autocomplete="off"></label></div>
-      <label class="fld destilat"><span>Čo chcete ochutnať</span><select name="destilat"><option>Whisky</option><option>Rum</option><option>Whisky aj rum</option><option>Nechám na vás</option></select></label>
+      <label class="fld destilat"><span>Čo chcete ochutnať</span><select name="destilat"><option>Whisky</option><option>Rum</option><option>Whisky aj rum</option><option>Cesta okolo sveta alkoholu</option><option>Nechám na vás</option></select></label>
+      <div class="row2 akcia-volby">
+        <label class="fld"><span>Riadená degustácia</span><select name="styl">${STYLY.map(s => `<option>${s}</option>`).join('')}</select></label>
+        <label class="fld"><span>Jedlo</span><select name="jedlo">${JEDLO.map(s => `<option>${s}</option>`).join('')}</select></label>
+      </div>
       <div class="row2">
         <label class="fld"><span>Termín</span><input type="date" name="datum" min="${min}" required></label>
         <label class="fld"><span>Čas <em>(približne)</em></span><input type="time" name="cas" step="900"></label>
@@ -418,7 +425,7 @@
     </form>`;
   }
 
-  function otvorDopyt(druh) {
+  function otvorDopyt(druh, styl) {
     druh = DRUHY[druh] ? druh : 'degustacia';
     const m = otvorModal(`<div class="ev-detail t-${DRUHY[druh].typ}">
       <div class="ev-detail-head">
@@ -432,9 +439,12 @@
       ${formularDopyt(druh)}
     </div>`, 'm-akcia', 'Súkromná akcia');
     const f = $('form.book', m);
+    if (styl && STYLY.includes(styl)) f.elements.styl.value = styl;
+    if (druh === 'podujatie') f.elements.pocet.value = 10;
     const prepni = () => {
       const deg = f.elements.druh.value === 'degustacia';
       $('.destilat', f).hidden = !deg;
+      $('.akcia-volby', f).hidden = deg;
       $('.vek-chk', f).hidden = !deg;
       const det = $('.ev-detail', m);
       det.className = `ev-detail t-${deg ? 'whisky' : 'ine'}`;
@@ -450,7 +460,7 @@
     const kedy = `${fDatum(d.datum + 'T12:00')}${d.cas ? ' okolo ' + d.cas : ''}`;
     const telo = [
       'Dobrý deň,', '',
-      d.druh === 'degustacia' ? 'mám záujem o súkromnú degustáciu.' : 'mám záujem o prenájom baru na súkromnú udalosť.', '',
+      d.druh === 'degustacia' ? 'mám záujem o súkromnú degustáciu.' : 'mám záujem o firemnú akciu alebo oslavu u vás.', '',
       `Termín: ${kedy}`,
       `Počet osôb: ${d.pocet}`,
       d.druh === 'degustacia' ? `Destilát: ${d.destilat}` : null,
@@ -476,6 +486,10 @@
       pocet: parseInt(fd.get('pocet'), 10) || 0, destilat: txt('destilat'), meno: txt('meno'), email: txt('email'),
       telefon: txt('telefon'), poznamka: txt('poznamka'), suhlas: !!fd.get('suhlas'), web: txt('web')
     };
+    if (d.druh === 'podujatie') {
+      d.destilat = '';
+      d.poznamka = [`Degustácia: ${txt('styl')}`, `Jedlo: ${txt('jedlo')}`, d.poznamka].filter(Boolean).join(' | ').slice(0, 800);
+    }
 
     $$('.bad', f).forEach(x => x.classList.remove('bad'));
     const chyby = [];
@@ -1003,7 +1017,7 @@
     const t = e.target.closest('[data-dopyt]');
     if (!t || t.closest('.modal') || e.ctrlKey || e.metaKey || e.shiftKey) return;
     e.preventDefault();
-    otvorDopyt(t.dataset.dopyt);
+    otvorDopyt(t.dataset.dopyt, t.dataset.styl);
   });
   document.addEventListener('click', e => {
     const v = e.target.closest('[data-video]');
