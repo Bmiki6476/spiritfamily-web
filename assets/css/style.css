@@ -551,3 +551,14 @@ body.modal-open { overflow: hidden; }
 .priv-grid.g3 { grid-template-columns: repeat(3, 1fr); }
 .priv-grid.g3 .priv-card h3 { font-size: clamp(28px, 3.2vw, 36px); }
 @media (max-width: 960px) { .priv-grid.g3 { grid-template-columns: 1fr; } }
+
+/* All You Can Drink 26. 12. */
+.aycd-druhy { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.aycd-druhy li { padding: 24px 22px; border-radius: var(--radius); border: 1px solid var(--line); background: var(--card); }
+.aycd-druhy strong { display: block; font: 400 34px/1 var(--f-display); letter-spacing: .02em; color: var(--gold2); }
+.aycd-druhy span { display: block; margin-top: 8px; color: var(--muted); font-size: 15px; }
+.aycd-druhy .aycd-druhy-hl { border-color: var(--line2); background: linear-gradient(160deg, rgba(217, 183, 122, .16), var(--card) 70%); }
+.steps.steps-4 { grid-template-columns: repeat(4, 1fr); }
+.hero-aycd::before { background: linear-gradient(180deg, rgba(13, 10, 7, .55) 0%, rgba(13, 10, 7, .62) 40%, rgba(13, 10, 7, .96) 100%); }
+@media (max-width: 1020px) { .aycd-druhy, .steps.steps-4 { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 560px) { .aycd-druhy, .steps.steps-4 { grid-template-columns: 1fr; } }

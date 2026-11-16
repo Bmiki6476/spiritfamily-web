@@ -190,7 +190,7 @@
     const pct = a.kapacita ? Math.min(100, Math.round((obsadene / a.kapacita) * 100)) : 0;
     const fakty = [
       ['Termín', `${DNI[a.start.getDay()]} ${fDlho(a.start)}`],
-      a.cas && ['Začiatok', a.cas],
+      a.cas && (a.koniec ? ['Čas', `${a.cas} – ${a.koniec}`] : ['Začiatok', a.cas]),
       a.cena && [a.online ? 'Cena v bare' : 'Cena', cena(a.cena)],
       a.cena && a.online && ['Online', `${cena(a.cena)} ${DOPRAVA_TEXT}`.trim()],
       ['Kde', a.online ? 'Stromová 1, Trenčín · aj online' : 'Stromová 1, Trenčín']
@@ -213,6 +213,7 @@
       </div>
       ${a.obrazok ? `<img class="ev-img" src="${esc(a.obrazok)}" alt="">` : ''}
       ${popis ? `<div class="ev-body">${popis}</div>` : ''}
+      ${a.odkaz ? `<p><a class="btn btn-ghost btn-sm" href="${esc(a.odkaz)}">${esc(a.odkaz_text || 'Všetko o akcii')}</a></p>` : ''}
       <dl class="ev-facts">${fakty.map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>
       ${a.kapacita && !a.minula && !MAILOM ? `<div class="cap"><span class="cap-bar"><i style="width:${pct}%"></i></span><span>${s.text}</span></div>` : ''}
       ${spodok}
@@ -1032,7 +1033,24 @@
   initGaleria();
   initMapa();
 
+  // Podstránka jednej akcie (napr. all-you-can-drink.html): živý počet voľných miest
+  async function initStrankaAkcie() {
+    const id = $('[data-akcia-id]').dataset.akciaId;
+    const cislo = $('[data-volne]');
+    const text = $('[data-volne-text]');
+    try {
+      const a = (await nacitajAkcie()).find(x => x.id === id);
+      if (!a || !a.kapacita || MAILOM || !cislo) return;
+      if (a.minula) { cislo.textContent = 'už'; text.textContent = 'prebehlo'; return; }
+      cislo.textContent = a.volne > 0 ? `${a.volne} / ${a.kapacita}` : 'plno';
+      text.textContent = a.volne > 0 ? 'voľných miest' : 'miesta sú obsadené';
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   const stranka = document.body.dataset.page;
+  if ($('[data-akcia-id]')) initStrankaAkcie();
   if (stranka === 'index') { initHomeAkcie(); initHomeNovinky(); }
   if (stranka === 'akcie') initAkcie();
   if (stranka === 'novinky') initNovinky();
