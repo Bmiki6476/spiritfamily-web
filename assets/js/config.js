@@ -23,7 +23,7 @@ window.SF_CONFIG = {
   ONLINE_DOPRAVA: 3,
 
   // Súkromná degustácia (sekcia Súkromné akcie)
-  SUKROMNA_CENA: '120 € pre 4 osoby',
+  SUKROMNA_CENA: '120 € pre 4 osoby, každá ďalšia +25 €',
 
   // Degustácia u vás (degustacia-u-vas.html) – len na zobrazenie, platná cena sa ráta v Code.gs (NASTAVENIA.OSLAVA), musí sedieť
   OSLAVA: {

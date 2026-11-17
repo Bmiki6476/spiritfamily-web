@@ -593,3 +593,5 @@ body.modal-open { overflow: hidden; }
   .sk-grid { gap: 4px; }
   .sk-day { min-height: 40px; font-size: 16px; }
 }
+.priv-extra { margin: -14px 0 22px; font: 600 14px var(--f-cond); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.sk-sum { margin-top: 6px; }

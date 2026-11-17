@@ -594,7 +594,10 @@
       mes = new Date(mes.getFullYear(), mes.getMonth() + 1, 1);
     }
     let vybrany = '';
-    const osobMax = info.osob || 4;
+    const osobZaklad = info.osob || 4;
+    const dalsia = Number(info.dalsia) || 0;
+    const osobMax = dalsia ? Math.max(osobZaklad, Number(info.max) || osobZaklad) : osobZaklad;
+    const sumaPre = n => info.cena + Math.max(0, n - osobZaklad) * dalsia;
     const casy = info.casy || [];
     const predvolenyCas = casy.includes('18:00') ? '18:00' : casy[0];
 
@@ -604,7 +607,7 @@
         <div class="hp" aria-hidden="true"><label>Nevypĺňajte <input name="web" tabindex="-1" autocomplete="off"></label></div>
         <div class="row2">
           <label class="fld"><span>Začiatok</span><select name="cas">${casy.map(c => `<option${c === predvolenyCas ? ' selected' : ''}>${esc(c)}</option>`).join('')}</select></label>
-          <label class="fld"><span>Počet osôb</span><select name="pocet">${Array.from({ length: osobMax }, (_, i) => `<option value="${i + 1}"${i + 1 === osobMax ? ' selected' : ''}>${osob(i + 1)}</option>`).join('')}</select></label>
+          <label class="fld"><span>Počet osôb</span><select name="pocet">${Array.from({ length: osobMax }, (_, i) => `<option value="${i + 1}"${i + 1 === osobZaklad ? ' selected' : ''}>${osob(i + 1)}${i + 1 > osobZaklad ? ` (+${esc(eur((i + 1 - osobZaklad) * dalsia))})` : ''}</option>`).join('')}</select></label>
         </div>
         <label class="fld"><span>Čo chcete ochutnať</span><select name="destilat">${DESTILATY.map(x => `<option>${x}</option>`).join('')}</select></label>
         <div class="row2">
@@ -616,7 +619,8 @@
         <label class="chk"><input type="checkbox" name="vek"> <span>Všetci účastníci degustácie majú viac ako 18 rokov.</span></label>
         <label class="chk"><input type="checkbox" name="suhlas"> <span>Beriem na vedomie <a href="ochrana-udajov.html" target="_blank">informácie o spracovaní osobných údajov</a>.</span></label>
         <label class="chk"><input type="checkbox" name="podmienky"> <span>Súhlasím s <a href="podmienky.html" target="_blank">obchodnými podmienkami</a>.</span></label>
-        <p class="sum-total"><span>Spolu</span><strong>${esc(eur(info.cena))}</strong></p>
+        <dl class="sum-list sk-sum"></dl>
+        <p class="sum-total"><span>Spolu</span><strong class="sk-spolu">${esc(eur(info.cena))}</strong></p>
         <p class="form-msg" role="alert">${sprava ? esc(sprava) : ''}</p>
         <button class="btn" type="submit">Zaplatiť ${esc(eur(info.cena))}</button>
         <p class="fine">Zaplatíte kartou, Apple Pay alebo Google Pay cez zabezpečenú bránu Stripe a termín vám medzitým podržíme. Potvrdenie príde e-mailom. Zrušenie najneskôr 48 hodín vopred – vrátime celú sumu. Máte voucher zo Zľavomatu alebo chcete iný termín? <button class="link-btn sk-dopyt" type="button">Pošlite nám dopyt</button>.</p>
@@ -661,6 +665,18 @@
       if (window.matchMedia('(max-width: 700px)').matches) vybraneText.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
     $('.sk-dopyt', f).addEventListener('click', () => otvorDopyt('degustacia'));
+    // rozpis ceny a suma na tlačidle podľa počtu osôb
+    const prepocitaj = () => {
+      const n = parseInt(f.elements.pocet.value, 10) || osobZaklad;
+      const navyse = Math.max(0, n - osobZaklad);
+      $('.sk-sum', f).innerHTML = `<div><dt>Súkromná degustácia <small>${osob(osobZaklad)} v cene</small></dt><dd>${esc(eur(info.cena))}</dd></div>` +
+        (navyse ? `<div><dt>${navyse} × ďalšia osoba <small>po ${esc(eur(dalsia))}</small></dt><dd>${esc(eur(navyse * dalsia))}</dd></div>` : '');
+      $('.sk-spolu', f).textContent = eur(sumaPre(n));
+      const btn = $('button[type=submit]', f);
+      if (!btn.disabled) btn.textContent = `Zaplatiť ${eur(sumaPre(n))}`;
+    };
+    f.elements.pocet.addEventListener('change', prepocitaj);
+    prepocitaj();
     render();
 
     f.addEventListener('submit', async e => {
@@ -670,7 +686,7 @@
       const fd = new FormData(f);
       const txt = k => String(fd.get(k) || '').trim();
       const d = {
-        datum: vybrany, cas: txt('cas'), pocet: parseInt(fd.get('pocet'), 10) || osobMax, destilat: txt('destilat'),
+        datum: vybrany, cas: txt('cas'), pocet: parseInt(fd.get('pocet'), 10) || osobZaklad, destilat: txt('destilat'),
         meno: txt('meno'), email: txt('email'), telefon: txt('telefon'), poznamka: txt('poznamka'),
         vek: !!fd.get('vek'), suhlas: !!fd.get('suhlas'), podmienky: !!fd.get('podmienky'), web: txt('web')
       };
@@ -710,7 +726,7 @@
           render();
         }
         btn.disabled = false;
-        btn.textContent = `Zaplatiť ${eur(info.cena)}`;
+        prepocitaj();
       }
     });
   }
