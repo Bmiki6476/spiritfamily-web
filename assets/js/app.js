@@ -1213,6 +1213,12 @@
     if (/^SF\d{6}-[A-Z0-9]{4}$/.test(obj)) await getJSON(API + '?a=zrusplatbu&obj=' + encodeURIComponent(obj)).catch(err => console.error(err));
     otvorSukromnu('Platbu ste zrušili, nič sme nestrhli. Termín si môžete vybrať znova.');
   })();
+  // odkaz akcie.html#vybrat-termin (napr. v e-maile) rovno otvorí kalendár súkromnej degustácie
+  if (location.hash === '#vybrat-termin' && $('[data-sukromna]')) {
+    const sek = $('#sukromne');
+    if (sek) sek.scrollIntoView();
+    otvorSukromnu();
+  }
   // termíny načítame vopred, aby sa okno otvorilo hneď
   if ($('[data-sukromna]') && !DEMO && !/platba=zrusena/.test(location.search)) {
     setTimeout(() => nacitajSukromnu().catch(() => {}), 1500);
