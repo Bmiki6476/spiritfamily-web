@@ -540,6 +540,181 @@
     }
   }
 
+  /* ---------- Súkromná degustácia v bare: výber voľného dňa + platba vopred ---------- */
+  let sukromnaCache = null;
+  function nacitajSukromnu() {
+    if (!sukromnaCache) sukromnaCache = getJSON(API + '?a=sukromna').catch(err => { sukromnaCache = null; throw err; });
+    return sukromnaCache;
+  }
+  const isoDen = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const zIso = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+  const DESTILATY = ['Whisky', 'Rum', 'Whisky aj rum', 'Cesta okolo sveta alkoholu', 'Nechám na vás'];
+
+  async function otvorSukromnu(sprava) {
+    const cenaTxt = CFG.SUKROMNA_CENA || '120 € pre 4 osoby';
+    const m = otvorModal(`<div class="ev-detail t-whisky">
+      <div class="ev-detail-head">
+        <span class="ev-ico" aria-hidden="true">${IKONY.whisky}</span>
+        <div>
+          <p class="eyebrow">Súkromná degustácia v bare</p>
+          <h2>Vyberte si termín</h2>
+          <p class="ev-sub">${esc(cenaTxt)} · zaplatíte hneď online a večer je len váš</p>
+        </div>
+      </div>
+      <div class="sk-obsah"><div class="skel sk-skel"></div></div>
+    </div>`, 'm-akcia', 'Súkromná degustácia – výber termínu');
+    const obsah = $('.sk-obsah', m);
+    const naDopyt = text => {
+      obsah.innerHTML = `<div class="note sk-note"><p>${text}</p><button class="btn" type="button">Poslať dopyt</button><p class="fine">Alebo zavolajte na <a href="${TEL_HREF}">${esc(TEL)}</a>.</p></div>`;
+      $('button', obsah).addEventListener('click', () => otvorDopyt('degustacia'));
+    };
+    if (DEMO) { naDopyt('Online výber termínu je dočasne nedostupný. Napíšte nám, kedy by ste chceli prísť.'); return; }
+    let info;
+    try {
+      info = await nacitajSukromnu();
+    } catch (err) {
+      console.error(err);
+      if (m.isConnected) naDopyt('Voľné termíny sa nepodarilo načítať. Pošlite nám dopyt a termín potvrdíme.');
+      return;
+    }
+    if (!m.isConnected) return;
+    if (!info.platby) { naDopyt('Platba kartou je dočasne nedostupná. Pošlite nám dopyt a termín potvrdíme.'); return; }
+
+    const obsadene = new Set(info.obsadene || []);
+    const prvy = zIso(info.od);
+    const posl = zIso(info.do);
+    const volny = iso => iso >= info.od && iso <= info.do && !obsadene.has(iso);
+    let mes = new Date(prvy.getFullYear(), prvy.getMonth(), 1);
+    // ak v prvom mesiaci nič voľné nie je, začneme ďalším
+    for (let k = 0; k < 3; k++) {
+      const koniec = new Date(mes.getFullYear(), mes.getMonth() + 1, 0);
+      let ma = false;
+      for (let d = new Date(mes); d <= koniec; d.setDate(d.getDate() + 1)) if (volny(isoDen(d))) { ma = true; break; }
+      if (ma || koniec >= posl) break;
+      mes = new Date(mes.getFullYear(), mes.getMonth() + 1, 1);
+    }
+    let vybrany = '';
+    const osobMax = info.osob || 4;
+    const casy = info.casy || [];
+    const predvolenyCas = casy.includes('18:00') ? '18:00' : casy[0];
+
+    obsah.innerHTML = `<div class="sk-cal"></div>
+      <form class="book sk-form" novalidate>
+        <p class="sk-vybrane" aria-live="polite">Kliknite na voľný deň v kalendári.</p>
+        <div class="hp" aria-hidden="true"><label>Nevypĺňajte <input name="web" tabindex="-1" autocomplete="off"></label></div>
+        <div class="row2">
+          <label class="fld"><span>Začiatok</span><select name="cas">${casy.map(c => `<option${c === predvolenyCas ? ' selected' : ''}>${esc(c)}</option>`).join('')}</select></label>
+          <label class="fld"><span>Počet osôb</span><select name="pocet">${Array.from({ length: osobMax }, (_, i) => `<option value="${i + 1}"${i + 1 === osobMax ? ' selected' : ''}>${osob(i + 1)}</option>`).join('')}</select></label>
+        </div>
+        <label class="fld"><span>Čo chcete ochutnať</span><select name="destilat">${DESTILATY.map(x => `<option>${x}</option>`).join('')}</select></label>
+        <div class="row2">
+          <label class="fld"><span>Meno a priezvisko</span><input name="meno" autocomplete="name" maxlength="80" required></label>
+          <label class="fld"><span>Telefón</span><input type="tel" name="telefon" autocomplete="tel" maxlength="30" placeholder="09xx xxx xxx" required></label>
+        </div>
+        <label class="fld"><span>E-mail</span><input type="email" name="email" autocomplete="email" maxlength="120" required></label>
+        <label class="fld"><span>Poznámka <em>(príležitosť, obľúbené značky – nepovinné)</em></span><textarea name="poznamka" rows="2" maxlength="800"></textarea></label>
+        <label class="chk"><input type="checkbox" name="vek"> <span>Všetci účastníci degustácie majú viac ako 18 rokov.</span></label>
+        <label class="chk"><input type="checkbox" name="suhlas"> <span>Beriem na vedomie <a href="ochrana-udajov.html" target="_blank">informácie o spracovaní osobných údajov</a>.</span></label>
+        <label class="chk"><input type="checkbox" name="podmienky"> <span>Súhlasím s <a href="podmienky.html" target="_blank">obchodnými podmienkami</a>.</span></label>
+        <p class="sum-total"><span>Spolu</span><strong>${esc(eur(info.cena))}</strong></p>
+        <p class="form-msg" role="alert">${sprava ? esc(sprava) : ''}</p>
+        <button class="btn" type="submit">Zaplatiť ${esc(eur(info.cena))}</button>
+        <p class="fine">Zaplatíte kartou, Apple Pay alebo Google Pay cez zabezpečenú bránu Stripe a termín vám medzitým podržíme. Potvrdenie príde e-mailom. Zrušenie najneskôr 48 hodín vopred – vrátime celú sumu. Máte voucher zo Zľavomatu alebo chcete iný termín? <button class="link-btn sk-dopyt" type="button">Pošlite nám dopyt</button>.</p>
+      </form>`;
+    const cal = $('.sk-cal', obsah);
+    const f = $('form', obsah);
+    const vybraneText = $('.sk-vybrane', f);
+
+    const render = () => {
+      const y = mes.getFullYear();
+      const mm = mes.getMonth();
+      const posun = (new Date(y, mm, 1).getDay() + 6) % 7;
+      const pocetDni = new Date(y, mm + 1, 0).getDate();
+      const skor = new Date(y, mm, 1) > new Date(prvy.getFullYear(), prvy.getMonth(), 1);
+      const neskor = new Date(y, mm + 1, 1) <= posl;
+      let h = `<div class="cal-head">
+          <button class="cal-nav" type="button" data-sk="-1" aria-label="Predchádzajúci mesiac"${skor ? '' : ' disabled'}>&lsaquo;</button>
+          <h3 aria-live="polite">${MES[mm]} ${y}</h3>
+          <button class="cal-nav" type="button" data-sk="1" aria-label="Nasledujúci mesiac"${neskor ? '' : ' disabled'}>&rsaquo;</button>
+        </div><div class="sk-grid">${DNI_KR.map(d => `<div class="cal-dow">${d}</div>`).join('')}`;
+      for (let k = 0; k < posun; k++) h += '<span class="sk-day prazdny" aria-hidden="true"></span>';
+      for (let den = 1; den <= pocetDni; den++) {
+        const d = new Date(y, mm, den);
+        const iso = isoDen(d);
+        const ok = volny(iso);
+        h += `<button type="button" class="sk-day" data-den="${iso}"${ok ? '' : ' disabled'} aria-pressed="${iso === vybrany}" aria-label="${DNI[d.getDay()]} ${den}. ${MES_GEN[mm]}${ok ? ' – voľné' : ' – obsadené'}">${den}</button>`;
+      }
+      cal.innerHTML = h + `</div><p class="sk-legend"><span><i></i>voľné</span><span><i class="x"></i>obsadené</span></p>`;
+    };
+    cal.addEventListener('click', e => {
+      const nav = e.target.closest('[data-sk]');
+      if (nav && !nav.disabled) { mes = new Date(mes.getFullYear(), mes.getMonth() + Number(nav.dataset.sk), 1); render(); return; }
+      const b = e.target.closest('[data-den]');
+      if (!b || b.disabled) return;
+      vybrany = b.dataset.den;
+      const d = zIso(vybrany);
+      vybraneText.innerHTML = `Vybraný termín: <strong>${DNI[d.getDay()]} ${d.getDate()}. ${MES_GEN[d.getMonth()]}</strong>`;
+      $('.form-msg', f).textContent = '';
+      render();
+      const fokus = $(`[data-den="${vybrany}"]`, cal);
+      if (fokus) fokus.focus({ preventScroll: true });
+      if (window.matchMedia('(max-width: 700px)').matches) vybraneText.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    $('.sk-dopyt', f).addEventListener('click', () => otvorDopyt('degustacia'));
+    render();
+
+    f.addEventListener('submit', async e => {
+      e.preventDefault();
+      const msg = $('.form-msg', f);
+      const btn = $('button[type=submit]', f);
+      const fd = new FormData(f);
+      const txt = k => String(fd.get(k) || '').trim();
+      const d = {
+        datum: vybrany, cas: txt('cas'), pocet: parseInt(fd.get('pocet'), 10) || osobMax, destilat: txt('destilat'),
+        meno: txt('meno'), email: txt('email'), telefon: txt('telefon'), poznamka: txt('poznamka'),
+        vek: !!fd.get('vek'), suhlas: !!fd.get('suhlas'), podmienky: !!fd.get('podmienky'), web: txt('web')
+      };
+      $$('.bad', f).forEach(x => x.classList.remove('bad'));
+      const chyby = [];
+      const zle = (meno, text) => { f.elements[meno] && f.elements[meno].classList.add('bad'); chyby.push(text); };
+      if (!d.datum) chyby.push('Najprv vyberte voľný deň v kalendári.');
+      if (d.meno.length < 2) zle('meno', 'Vyplňte meno.');
+      if (d.telefon.replace(/\D/g, '').length < 9) zle('telefon', 'Skontrolujte telefónne číslo.');
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(d.email)) zle('email', 'Skontrolujte e-mail.');
+      if (!d.vek) zle('vek', 'Degustácia je len pre osoby staršie ako 18 rokov.');
+      if (!d.suhlas) zle('suhlas', 'Potvrďte, prosím, informácie o spracovaní údajov.');
+      if (!d.podmienky) zle('podmienky', 'Potvrďte, prosím, obchodné podmienky.');
+      if (chyby.length) {
+        msg.textContent = chyby[0];
+        if (!d.datum) { const prvyVolny = $('.sk-day:not(:disabled):not(.prazdny)', cal); cal.scrollIntoView({ behavior: 'smooth', block: 'start' }); if (prvyVolny) prvyVolny.focus({ preventScroll: true }); }
+        else $('.bad', f).focus();
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = 'Pripravujem platbu…';
+      msg.textContent = '';
+      try {
+        const res = await (await fetch(API, { method: 'POST', body: JSON.stringify({ a: 'sukromna', ...d }) })).json();
+        if (!res || !res.ok) throw new Error((res && res.chyba) || 'Objednávku sa nepodarilo odoslať.');
+        btn.textContent = 'Presmerúvam na platbu…';
+        window.location.href = res.platba;
+      } catch (err) {
+        msg.textContent = /fetch|network/i.test(err.message)
+          ? `Nepodarilo sa spojiť so serverom. Skúste to znova alebo zavolajte na ${TEL}.`
+          : err.message;
+        if (/obsadil/.test(err.message)) {
+          obsadene.add(vybrany);
+          sukromnaCache = null;
+          vybrany = '';
+          vybraneText.textContent = 'Kliknite na voľný deň v kalendári.';
+          render();
+        }
+        btn.disabled = false;
+        btn.textContent = `Zaplatiť ${eur(info.cena)}`;
+      }
+    });
+  }
+
   /* ---------- Degustácia u vás ---------- */
   const OS = Object.assign({
     CENA_VLASTNE_FLASE: 169, CENA_OSOBA: 29, VZORKY: 7, ML: 25, ZADARMO_KM: 30, CENA_KM: 0.4,
@@ -725,6 +900,7 @@
         const d = await getJSON(API + '?a=platba&sid=' + encodeURIComponent(sid));
         if (d.zaplatene) {
           const oslava = d.druh === 'oslava';
+          const sukromna = d.druh === 'sukromna';
           box.className = 'pay-box ok';
           box.innerHTML = `<p class="eyebrow">Zaplatené · ${esc(d.obj || '')}</p>
             <h2>Ďakujeme${d.meno ? ', ' + esc(d.meno) : ''}!</h2>
@@ -732,7 +908,9 @@
             <p>${esc(d.popis || '')}</p>
             <p>${oslava
               ? 'Termín vám čo najskôr potvrdíme telefonicky alebo e-mailom a dohodneme podrobnosti. Ak by sme v tomto termíne nemohli prísť, celú sumu vám vrátime.'
-              : 'Miesto je vaše, tešíme sa na vás.'}</p>
+              : sukromna
+                ? 'Súkromná degustácia je zarezervovaná, bar bude v tom čase len pre vás. Ak chcete upresniť výber fliaš, odpovedzte na potvrdzovací e-mail.'
+                : 'Miesto je vaše, tešíme sa na vás.'}</p>
             <p>Potvrdenie sme poslali na <strong>${esc(d.email)}</strong>. Doklad o platbe vám pošle aj Stripe.</p>
             <a class="btn" href="${oslava ? 'index.html' : 'akcie.html'}">${oslava ? 'Späť na úvod' : 'Ďalšie akcie'}</a>`;
           return;
@@ -1020,6 +1198,25 @@
     e.preventDefault();
     otvorDopyt(t.dataset.dopyt, t.dataset.styl);
   });
+  document.addEventListener('click', e => {
+    const t = e.target.closest('[data-sukromna]');
+    if (!t || t.closest('.modal') || e.ctrlKey || e.metaKey || e.shiftKey) return;
+    e.preventDefault();
+    otvorSukromnu();
+  });
+  // návrat zo Stripe cez „Späť“: platbu zrušíme, deň uvoľníme a okno s výberom termínu otvoríme znova
+  (async () => {
+    const q = new URLSearchParams(location.search);
+    if (q.get('platba') !== 'zrusena' || location.hash !== '#sukromne' || DEMO) return;
+    const obj = q.get('obj') || '';
+    history.replaceState(null, '', location.pathname + location.hash);
+    if (/^SF\d{6}-[A-Z0-9]{4}$/.test(obj)) await getJSON(API + '?a=zrusplatbu&obj=' + encodeURIComponent(obj)).catch(err => console.error(err));
+    otvorSukromnu('Platbu ste zrušili, nič sme nestrhli. Termín si môžete vybrať znova.');
+  })();
+  // termíny načítame vopred, aby sa okno otvorilo hneď
+  if ($('[data-sukromna]') && !DEMO && !/platba=zrusena/.test(location.search)) {
+    setTimeout(() => nacitajSukromnu().catch(() => {}), 1500);
+  }
   document.addEventListener('click', e => {
     const v = e.target.closest('[data-video]');
     if (!v || e.ctrlKey || e.metaKey || e.shiftKey) return;
